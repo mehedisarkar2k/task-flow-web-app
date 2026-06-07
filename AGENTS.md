@@ -9,10 +9,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 ## Code Quality
 
 - Write clean, readable, maintainable code.
-- Prefer simplicity over clever solutions.
-- Avoid unnecessary abstractions.
-- Follow SOLID principles where applicable.
-- Keep business logic separate from UI and infrastructure.
+  - Prefer simplicity over clever solutions.
+  - Avoid unnecessary abstractions.
+  - Follow SOLID principles where applicable.
+  - Keep business logic separate from UI and infrastructure.
+  - STRICT: All UI must be Mobile First and smoothly responsive across all breakpoints (mobile, sm, md, lg, xl).
 
 ## File Size
 
@@ -38,6 +39,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Avoid abbreviations unless industry standard.
 - Functions should be verbs.
 - Components should be nouns.
+- STRICT: Always use **Arrow Functions** for component declarations (`export const Comp = () => {}`). Do NOT use `function Comp() {}`.
+- STRICT: Avoid `React.FC`. Explicitly type component props instead.
 
 Examples:
 
