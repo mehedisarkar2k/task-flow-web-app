@@ -310,6 +310,12 @@ Keep features isolated.
 
 One component should have one responsibility.
 
+## Declaration Rules
+- STRICTLY use **Arrow Functions** for component declarations. (e.g., `export const MyComponent = () => { ... }`). Do NOT use `function MyComponent() {}`.
+- Do NOT use `React.FC` or `React.FunctionComponent`. Instead, explicitly type the props. 
+  - Why? `React.FC` is mostly unnecessary, requires importing React, and makes using generics harder.
+  - Good: `export const MyComponent = ({ title }: { title: string }) => { ... }`
+
 Avoid components that:
 
 * fetch data
@@ -671,3 +677,18 @@ Whenever generating code:
 8. Use React Hook Form + Zod for forms.
 9. Avoid duplication.
 10. Produce production-ready code.
+
+---
+
+# Responsive Design Rules
+
+STRICT RULE: All UI development must be "Mobile First".
+Every single component and screen MUST be smoothly responsive across all standard breakpoints:
+* mobile (`default`)
+* medium mobile / small tablet (`sm:`)
+* tablet (`md:`)
+* laptop (`lg:`)
+* desktop/large (`xl:`)
+* ultra-wide (`2xl:`)
+
+Do NOT create desktop-only layouts. Always ensure content stacks or scales elegantly on smaller devices.
