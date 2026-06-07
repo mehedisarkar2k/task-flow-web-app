@@ -21,6 +21,7 @@ apiClient.interceptors.response.use(
     const normalizedError: ApiResponse = {
       success: false,
       message: error.response?.data?.message || error.message || 'An unexpected error occurred',
+      instructions: error.response?.data?.instructions,
       errors: error.response?.data?.errors,
     };
     
