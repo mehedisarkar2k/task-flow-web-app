@@ -8,7 +8,7 @@ export interface ApiResponse<T = any> {
 }
 
 export interface FieldError {
-  field: string;
+  field?: string;
   message: string;
 }
 
