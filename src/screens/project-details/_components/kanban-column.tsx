@@ -1,11 +1,13 @@
 import { Droppable } from "@hello-pangea/dnd";
-import { MoreHorizontal, Plus } from "lucide-react";
+import type { DraggableProvidedDragHandleProps } from "@hello-pangea/dnd";
+import { MoreHorizontal, Plus, GripHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KanbanTaskCard } from "@/screens/project-details/_components/kanban-task-card";
 import type { KanbanColumnData, KanbanTask } from "@/screens/project-details/types";
 
 interface KanbanColumnProps {
   column: KanbanColumnData;
+  dragHandleProps?: DraggableProvidedDragHandleProps | null;
   onAddTask: () => void;
   onEditTask: (task: KanbanTask) => void;
   onDeleteTask: (task: KanbanTask) => void;
@@ -14,6 +16,7 @@ interface KanbanColumnProps {
 
 export const KanbanColumn = ({
   column,
+  dragHandleProps,
   onAddTask,
   onEditTask,
   onDeleteTask,
@@ -29,8 +32,12 @@ export const KanbanColumn = ({
       )}
     >
       {/* Column Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-border/50 mx-1">
+      <div 
+        className="flex items-center justify-between pb-2 border-b border-border/50 mx-1 cursor-grab active:cursor-grabbing group/header"
+        {...dragHandleProps}
+      >
         <h3 className="font-heading text-lg font-semibold text-foreground flex items-center gap-2">
+          <GripHorizontal className="size-4 text-muted-foreground/50 opacity-0 group-hover/header:opacity-100 transition-opacity" />
           {column.title}
           <span
             className={cn(
@@ -47,6 +54,7 @@ export const KanbanColumn = ({
           className="text-muted-foreground hover:text-primary transition-colors"
           aria-label={column.id === "todo" ? `Add task to ${column.title}` : `Column actions for ${column.title}`}
           onClick={column.id === "todo" ? onAddTask : undefined}
+          onPointerDown={(e) => e.stopPropagation()} // Prevent dragging when clicking the button
         >
           {column.id === "todo" ? (
             <Plus className="size-5" />

@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import { KanbanColumn } from "@/screens/project-details/_components/kanban-column";
 import { CreateColumnModal } from "@/screens/project-details/_components/modals/create-column-modal";
-import { TaskModal } from "@/screens/project-details/_components/modals/task-modal";
-import { TaskDetailsSheet } from "@/screens/project-details/_components/modals/task-details-sheet";
+import { SelectTaskModal } from "@/screens/project-details/_components/modals/select-task-modal";
+import { TaskDetailsSheet } from "@/components/modals/task-details-sheet";
 import { DeleteConfirmationModal } from "@/components/modal/delete-confirmation-modal";
 import { Button } from "@/components/ui/button";
 import type { KanbanColumnData, KanbanTask } from "@/screens/project-details/types";
@@ -16,17 +18,24 @@ interface KanbanBoardProps {
 }
 
 export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
+  const router = useRouter();
   const [columns, setColumns] = useState<KanbanColumnData[]>(initialColumns);
 
   // Modal States
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
   
-  const [taskModal, setTaskModal] = useState<{ open: boolean; task?: KanbanTask; columnId: string }>({
+  const [selectTaskModal, setSelectTaskModal] = useState<{ open: boolean; columnId: string }>({
     open: false,
     columnId: "",
   });
 
-  const [detailsSheet, setDetailsSheet] = useState<{ open: boolean; task?: KanbanTask; columnTitle?: string }>({
+  const [detailsSheet, setDetailsSheet] = useState<{ 
+    open: boolean; 
+    task?: KanbanTask; 
+    columnTitle?: string;
+    columnId?: string;
+    mode?: "view" | "edit" | "create";
+  }>({
     open: false,
   });
 
@@ -38,9 +47,19 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
   });
 
   const onDragEnd = useCallback((result: DropResult) => {
-    const { source, destination } = result;
+    const { source, destination, type } = result;
     if (!destination) return;
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+
+    if (type === "column") {
+      setColumns((prev) => {
+        const newCols = [...prev];
+        const [movedCol] = newCols.splice(source.index, 1);
+        newCols.splice(destination.index, 0, movedCol);
+        return newCols;
+      });
+      return;
+    }
 
     setColumns((prev) => {
       const sourceColIndex = prev.findIndex((c) => c.id === source.droppableId);
@@ -119,31 +138,51 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
   return (
     <>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-6 overflow-x-auto pb-6 w-full snap-x">
-          {columns.map((col) => (
-            <div key={col.id} className="snap-start shrink-0">
-              <KanbanColumn
-                column={col}
-                onAddTask={() => setTaskModal({ open: true, columnId: col.id })}
-                onEditTask={(task) => setTaskModal({ open: true, task, columnId: col.id })}
-                onDeleteTask={(task) =>
-                  setDeleteModal({ open: true, type: "task", id: task.id, name: task.title, columnId: col.id })
-                }
-                onViewTask={(task) => setDetailsSheet({ open: true, task, columnTitle: col.title })}
-              />
-            </div>
-          ))}
-          <div className="snap-start shrink-0 w-[300px]">
-            <Button
-              variant="outline"
-              className="w-full h-[60px] border-dashed text-muted-foreground hover:text-primary hover:border-primary bg-card/50"
-              onClick={() => setIsColumnModalOpen(true)}
+        <Droppable droppableId="board" type="column" direction="horizontal">
+          {(provided) => (
+            <div
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="flex gap-6 overflow-x-auto pb-6 w-full snap-x"
             >
-              <Plus className="mr-2 size-5" />
-              Add Column
-            </Button>
-          </div>
-        </div>
+              {columns.map((col, index) => (
+                <Draggable key={col.id} draggableId={col.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={cn("snap-start shrink-0", snapshot.isDragging ? "opacity-60 z-50 scale-[1.02] shadow-xl rotate-1" : "")}
+                      style={provided.draggableProps.style as React.CSSProperties}
+                    >
+                      <KanbanColumn
+                        column={col}
+                        dragHandleProps={provided.dragHandleProps}
+                        onAddTask={() => setSelectTaskModal({ open: true, columnId: col.id })}
+                        onEditTask={(task) => setDetailsSheet({ open: true, task, columnId: col.id, mode: "edit" })}
+                        onDeleteTask={(task) =>
+                          setDeleteModal({ open: true, type: "task", id: task.id, name: task.title, columnId: col.id })
+                        }
+                        onViewTask={(task) => router.push(`/tasks/${task.id}`)}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
+              
+              <div className="snap-start shrink-0 w-[300px]">
+                <Button
+                  variant="outline"
+                  className="w-full h-[60px] border-dashed text-muted-foreground hover:text-primary hover:border-primary bg-card/50"
+                  onClick={() => setIsColumnModalOpen(true)}
+                >
+                  <Plus className="mr-2 size-5" />
+                  Add Column
+                </Button>
+              </div>
+            </div>
+          )}
+        </Droppable>
       </DragDropContext>
 
       <CreateColumnModal
@@ -152,12 +191,12 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
         onSubmit={handleAddColumn}
       />
 
-      <TaskModal
-        open={taskModal.open}
-        onOpenChange={(open) => setTaskModal((prev) => ({ ...prev, open }))}
-        task={taskModal.task}
-        columnId={taskModal.columnId}
+      <SelectTaskModal
+        open={selectTaskModal.open}
+        onOpenChange={(open) => setSelectTaskModal((prev) => ({ ...prev, open }))}
+        columnId={selectTaskModal.columnId}
         onSubmit={handleTaskSubmit}
+        availableTasks={[]} // Would fetch global backlog here
       />
 
       <TaskDetailsSheet
@@ -165,6 +204,9 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
         onOpenChange={(open) => setDetailsSheet((prev) => ({ ...prev, open }))}
         task={detailsSheet.task}
         columnTitle={detailsSheet.columnTitle}
+        columnId={detailsSheet.columnId}
+        mode={detailsSheet.mode}
+        onSubmit={handleTaskSubmit}
       />
 
       <DeleteConfirmationModal

@@ -1,32 +1,13 @@
-export type TaskPriority = "HIGH" | "MEDIUM" | "LOW";
+import type { Task, UserSnippet, Attachment } from "@/screens/tasks/types";
 
-export interface UserSnippet {
-  id: string;
-  name: string;
-  avatarUrl?: string; // We can use placeholder avatars like the HTML reference
-}
-
-export interface KanbanTask {
-  id: string;
-  title: string;
-  priority: TaskPriority;
-  dueDate: string;
-  assignee?: UserSnippet;
-  assignees?: UserSnippet[]; // Some tasks have multiple
-  isOverdue?: boolean;
-}
+// Re-export or alias for easy refactoring within project-details, though direct import is better
+export type KanbanTask = Task;
+export type { UserSnippet, Attachment };
 
 export interface KanbanColumnData {
   id: string; // e.g., "todo", "in_progress", "completed"
   title: string;
   tasks: KanbanTask[];
-}
-
-export interface Attachment {
-  id: string;
-  name: string;
-  size: string;
-  type: "image" | "document";
 }
 
 export interface ProjectDetails {
