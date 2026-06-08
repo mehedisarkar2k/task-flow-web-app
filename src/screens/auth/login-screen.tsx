@@ -50,15 +50,15 @@ export const LoginScreen = () => {
 
   const handleDemoLogin = async (role: "ADMIN" | "PM" | "MEMBER") => {
     let email = "";
-    if (role === "ADMIN") email = "demo-admin@taskflow.com";
-    else if (role === "PM") email = "demo-pm@taskflow.com";
-    else email = "demo-member@taskflow.com";
+    if (role === "ADMIN") email = "admin@taskflow.com";
+    else if (role === "PM") email = "pm1@taskflow.com";
+    else email = "user1@taskflow.com";
 
     setLoading(true);
     try {
       const { error } = await signIn.email({
         email,
-        password: "password",
+        password: "Ab@12345",
         rememberMe: false,
       });
 
