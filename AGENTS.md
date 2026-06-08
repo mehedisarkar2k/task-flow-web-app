@@ -54,6 +54,14 @@ Bad:
 - temp
 - helper1
 
+## Icons — STRICT RULE
+
+- **ALWAYS** use **Lucide** icons (`lucide-react`) — bundled with shadcn/ui.
+- **NEVER** use Material Symbols, Material Icons, Heroicons, or any other icon library.
+- Import directly: `import { LayoutDashboard, Bell } from "lucide-react"`.
+- Do NOT add `<link>` tags for Google Fonts icon fonts anywhere in the code.
+- If a Lucide icon doesn't exist, pick the closest available Lucide alternative.
+
 ## Types
 
 - Avoid `any`.

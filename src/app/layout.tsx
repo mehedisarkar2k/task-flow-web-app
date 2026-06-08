@@ -30,7 +30,7 @@ const RootLayout = ({
       className={`${montserrat.variable} ${ibmPlexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+      <body className="h-full flex flex-col bg-background text-foreground font-sans">
         {children}
       </body>
     </html>
