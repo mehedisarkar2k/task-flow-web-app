@@ -14,12 +14,20 @@ import {
 } from "@/components/ui/table";
 import type { Task } from "@/screens/tasks/types";
 
+interface TaskTablePagination {
+  page: number;
+  total: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
 interface TaskTableProps {
   tasks: Task[];
   onRowClick: (task: Task) => void;
+  pagination?: TaskTablePagination;
 }
 
-export const TaskTable = ({ tasks, onRowClick }: TaskTableProps) => {
+export const TaskTable = ({ tasks, onRowClick, pagination }: TaskTableProps) => {
   return (
     <div className="flex flex-col flex-1">
       <div className="overflow-x-auto">
@@ -122,10 +130,26 @@ export const TaskTable = ({ tasks, onRowClick }: TaskTableProps) => {
       
       {/* Pagination Bar */}
       <div className="px-4 py-3 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between font-label-md text-sm text-on-surface-variant">
-        <span>Showing {tasks.length > 0 ? 1 : 0} to {tasks.length} of {tasks.length} entries</span>
+        <span>
+          {pagination
+            ? `Page ${pagination.page} of ${pagination.totalPages} · ${pagination.total} ${pagination.total === 1 ? "task" : "tasks"}`
+            : `${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
+        </span>
         <div className="flex gap-2">
-          <button disabled className="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors disabled:opacity-50">Prev</button>
-          <button disabled className="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors disabled:opacity-50">Next</button>
+          <button
+            disabled={!pagination || pagination.page <= 1}
+            onClick={() => pagination?.onPageChange(pagination.page - 1)}
+            className="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <button
+            disabled={!pagination || pagination.page >= pagination.totalPages}
+            onClick={() => pagination?.onPageChange(pagination.page + 1)}
+            className="px-3 py-1 border border-outline-variant rounded hover:bg-surface-container transition-colors disabled:opacity-50"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { Info } from "lucide-react";
 import Link from "next/link";
 import type { Task } from "@/screens/tasks/types";
+import { formatDueDate } from "@/utils/task-format";
 
 interface TaskDetailsCardProps {
   task: Task;
@@ -46,7 +47,9 @@ export const TaskDetailsCard = ({ task }: TaskDetailsCardProps) => {
         {/* Created Date */}
         <div className="flex justify-between items-center">
           <span className="font-label-md text-on-surface-variant">Created</span>
-          <span className="font-data-mono text-[13px] text-on-surface">Oct 12, 2023</span>
+          <span className="font-data-mono text-[13px] text-on-surface">
+            {formatDueDate(task.createdAt) || "—"}
+          </span>
         </div>
 
         {/* Tags */}

@@ -4,7 +4,7 @@ import { ClipboardList, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TasksEmptyStateProps {
-  onCreateClick: () => void;
+  onCreateClick?: () => void;
 }
 
 export const TasksEmptyState = ({ onCreateClick }: TasksEmptyStateProps) => {
@@ -22,10 +22,12 @@ export const TasksEmptyState = ({ onCreateClick }: TasksEmptyStateProps) => {
         It looks like there are no tasks matching your current filters. You can create a new global task to get started.
       </p>
       
-      <Button onClick={onCreateClick} size="lg" className="font-label-md px-6">
-        <Plus className="size-5 mr-2" />
-        Create New Task
-      </Button>
+      {onCreateClick && (
+        <Button onClick={onCreateClick} size="lg" className="font-label-md px-6">
+          <Plus className="size-5 mr-2" />
+          Create New Task
+        </Button>
+      )}
     </div>
   );
 };
