@@ -13,6 +13,19 @@ import { DeleteConfirmationModal } from "@/components/modal/delete-confirmation-
 import { Button } from "@/components/ui/button";
 import type { KanbanColumnData, KanbanTask } from "@/screens/project-details/types";
 
+if (typeof window !== "undefined") {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    if (
+      typeof args[0] === "string" &&
+      args[0].includes("unsupported nested scroll container")
+    ) {
+      return;
+    }
+    originalWarn(...args);
+  };
+}
+
 interface KanbanBoardProps {
   initialColumns: KanbanColumnData[];
 }
