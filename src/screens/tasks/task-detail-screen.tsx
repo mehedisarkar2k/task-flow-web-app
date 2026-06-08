@@ -17,6 +17,7 @@ import { TaskDetailsCard } from "@/screens/tasks/_components/task-details-card";
 import { AttachmentList } from "@/screens/tasks/_components/attachment-list";
 import { TaskFormSheet } from "@/screens/tasks/_components/task-form-sheet";
 import { DeleteConfirmationModal } from "@/components/modal/delete-confirmation-modal";
+import { renderHtmlWithMentions } from "@/utils/render-html-with-mentions";
 import type { Task } from "@/screens/tasks/types";
 
 export const TaskDetailScreen = ({ taskId }: { taskId: string }) => {
@@ -117,15 +118,15 @@ export const TaskDetailScreen = ({ taskId }: { taskId: string }) => {
             <h3 className="font-label-md text-on-surface-variant mb-3 uppercase tracking-wider">
               Description
             </h3>
-            <p className="font-body-md text-on-surface leading-relaxed whitespace-pre-wrap">
-              {task.description || "No description provided."}
-            </p>
+            <div className="font-body-md text-on-surface leading-relaxed whitespace-pre-wrap break-words [&_p]:m-0">
+              {task.description ? renderHtmlWithMentions(task.description, task.project?.id) : "No description provided."}
+            </div>
           </div>
 
           <hr className="border-outline-variant/60 my-4" />
 
           {/* Comments — task discussion thread */}
-          <CommentThread taskId={taskId} />
+          <CommentThread taskId={taskId} projectId={task.project?.id} />
         </div>
 
         {/* Right Column */}

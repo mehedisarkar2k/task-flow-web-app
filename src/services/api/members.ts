@@ -7,6 +7,8 @@ export interface ProjectMemberSummary {
   email: string;
   avatar: string | null;
   projectRole: "LEAD" | "MEMBER";
+  role: string;
+  workload?: { total: number; completed: number; pending: number };
 }
 
 interface ServerMember extends ProjectMemberSummary {
@@ -26,6 +28,8 @@ export const membersApi = {
       email: m.email,
       avatar: m.avatar,
       projectRole: m.projectRole,
+      role: m.role,
+      workload: m.workload,
     }));
   },
 };

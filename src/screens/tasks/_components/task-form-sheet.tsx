@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -218,12 +218,12 @@ export const TaskFormSheet = ({
 
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="task-description">Description</Label>
-            <Textarea
-              id="task-description"
-              rows={3}
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={setDescription}
               placeholder="Add more detail…"
+              members={members ?? []}
+              className="min-h-[120px]"
             />
           </div>
 

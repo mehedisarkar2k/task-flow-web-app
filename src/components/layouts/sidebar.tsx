@@ -40,12 +40,6 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Tasks", href: "/tasks", Icon: ListTodo },
   { label: "Team", href: "/team", Icon: Users },
   { label: "Notifications", href: "/notifications", Icon: Bell },
-  {
-    label: "Admin",
-    href: "/admin/users",
-    Icon: ShieldCheck,
-    allowedRoles: ["ADMIN"],
-  },
 ];
 
 const ROLE_META: Record<Role, { label: string; Icon: LucideIcon }> = {

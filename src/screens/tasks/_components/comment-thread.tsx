@@ -15,27 +15,23 @@ import {
 } from "@/services/mutation/use-comment-mutations";
 import type { Comment } from "@/types/comment.types";
 
-const getInitial = (name: string) => name.charAt(0).toUpperCase();
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { renderHtmlWithMentions } from "@/utils/render-html-with-mentions";
 
-// Wraps plain textarea input into the rich-text HTML the API stores, escaping
-// any markup the user typed so it renders as text rather than injected HTML.
-const toHtmlBody = (text: string) => {
-  const escaped = text
-    .trim()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-  return `<p>${escaped.replace(/\n/g, "<br/>")}</p>`;
-};
+const getInitial = (name?: string) => name ? name.charAt(0).toUpperCase() : "?";
 
 const CommentItem = ({
   comment,
   taskId,
+  projectId,
   baseUrl,
+  members,
 }: {
   comment: Comment;
   taskId: string;
+  projectId?: string;
   baseUrl?: string;
+  members: { id: string; name: string; avatar: string | null }[];
 }) => {
   const { user } = useAuth();
   const isOwner = user?.id === comment.user.id;
@@ -51,7 +47,7 @@ const CommentItem = ({
   const handleSaveEdit = () => {
     if (!draft.trim()) return;
     updateComment.mutate(
-      { commentId: comment.id, data: { body: toHtmlBody(draft) } },
+      { commentId: comment.id, data: { body: draft } },
       { onSuccess: () => setIsEditing(false) },
     );
   };
@@ -84,11 +80,11 @@ const CommentItem = ({
 
         {isEditing ? (
           <div className="flex flex-col gap-2">
-            <textarea
-              autoFocus
-              className="w-full bg-surface border border-outline-variant rounded-lg p-2 text-on-surface min-h-[60px] focus:outline-none focus:border-primary"
+            <RichTextEditor
               value={draft}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={setDraft}
+              members={members}
+              className="min-h-[60px]"
             />
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSaveEdit} disabled={updateComment.isPending}>
@@ -101,16 +97,15 @@ const CommentItem = ({
           </div>
         ) : (
           <div className="group/comment flex items-start gap-2">
-            <div
-              className="font-body-md text-on-surface bg-surface-container-low p-3 rounded-lg border border-outline-variant/50 inline-block max-w-full [&_p]:m-0 [&_mention]:text-primary [&_mention]:font-medium break-words"
-              dangerouslySetInnerHTML={{ __html: comment.body }}
-            />
+            <div className="font-body-md text-on-surface bg-surface-container-low p-3 rounded-lg border border-outline-variant/50 inline-block max-w-full [&_p]:m-0 break-words">
+              {renderHtmlWithMentions(comment.body, projectId)}
+            </div>
             {isOwner && (
               <div className="flex gap-1 opacity-0 group-hover/comment:opacity-100 transition-opacity shrink-0 pt-1">
                 <button
                   className="p-1 text-on-surface-variant hover:text-primary"
                   onClick={() => {
-                    setDraft(comment.body.replace(/<[^>]+>/g, " ").trim());
+                    setDraft(comment.body);
                     setIsEditing(true);
                   }}
                 >
@@ -132,20 +127,44 @@ const CommentItem = ({
   );
 };
 
-export const CommentThread = ({ taskId }: { taskId: string }) => {
+import { useProjectMembers } from "@/services/query/use-project-members";
+import { useQuery } from "@tanstack/react-query";
+import { teamApi } from "@/services/api/team";
+
+export const CommentThread = ({ taskId, projectId }: { taskId: string; projectId?: string }) => {
   const { user } = useAuth();
   const { data: config } = useSystemConfig();
   const baseUrl = config?.profileImageBaseUrl;
 
   const { data, isLoading } = useCommentsQuery(taskId);
+  const { data: projectMembers = [] } = useProjectMembers(projectId);
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["team", "members"],
+    queryFn: () => teamApi.listMembers({}),
+    enabled: !projectId,
+  });
   const createComment = useCreateCommentMutation(taskId);
 
   const [draft, setDraft] = useState("");
-  const comments = data?.comments ?? [];
+  const rawComments = data?.comments ?? [];
+  const comments = [...rawComments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const normalizedTeamMembers = teamMembers.map(m => ({ id: m.id, name: m.name, avatar: (m as any).image ?? null }));
+  const members = projectId ? projectMembers : normalizedTeamMembers;
 
   const handlePost = () => {
-    if (!draft.trim()) return;
-    createComment.mutate({ body: toHtmlBody(draft) }, { onSuccess: () => setDraft("") });
+    // RichTextEditor might output "<p></p>" when empty, handle it
+    const isEmpty = draft.replace(/<[^>]*>?/gm, "").trim().length === 0;
+    if (isEmpty) return;
+    
+    createComment.mutate(
+      { body: draft },
+      { onSuccess: () => {
+          setDraft("");
+        } 
+      }
+    );
   };
 
   return (
@@ -165,19 +184,17 @@ export const CommentThread = ({ taskId }: { taskId: string }) => {
         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-[10px] font-medium text-white shrink-0 mt-1">
           {user ? getInitial(user.name) : "?"}
         </div>
-        <div className="flex-1 bg-surface border border-outline-variant focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 rounded-lg p-3 transition-all">
-          <textarea
-            className="w-full bg-transparent border-none resize-none focus:outline-none font-body-md text-on-surface min-h-[60px]"
-            placeholder="Add a comment..."
-            rows={2}
+        <div className="flex-1 flex flex-col gap-2">
+          <RichTextEditor
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={setDraft}
+            members={members}
           />
-          <div className="flex justify-end items-center mt-2 pt-2 border-t border-outline-variant/30">
+          <div className="flex justify-end">
             <Button
               size="sm"
               onClick={handlePost}
-              disabled={!draft.trim() || createComment.isPending}
+              disabled={draft.replace(/<[^>]*>?/gm, "").trim().length === 0 || createComment.isPending}
             >
               {createComment.isPending ? "Posting…" : "Post"}
             </Button>
@@ -198,7 +215,14 @@ export const CommentThread = ({ taskId }: { taskId: string }) => {
           </p>
         ) : (
           comments.map((comment) => (
-            <CommentItem key={comment.id} comment={comment} taskId={taskId} baseUrl={baseUrl} />
+            <CommentItem 
+              key={comment.id} 
+              comment={comment} 
+              taskId={taskId} 
+              projectId={projectId}
+              baseUrl={baseUrl} 
+              members={members} 
+            />
           ))
         )}
       </div>

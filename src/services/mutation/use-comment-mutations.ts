@@ -12,6 +12,7 @@ export const useCreateCommentMutation = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentKeys.list(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.detail(taskId) });
+      toast.success("Comment posted");
     },
     onError: (error: { message?: string }) => {
       toast.error(error?.message ?? "Failed to post comment");
@@ -27,6 +28,7 @@ export const useUpdateCommentMutation = (taskId: string) => {
       commentsApi.update(taskId, commentId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentKeys.list(taskId) });
+      toast.success("Comment updated");
     },
     onError: (error: { message?: string }) => {
       toast.error(error?.message ?? "Failed to update comment");
@@ -42,6 +44,7 @@ export const useDeleteCommentMutation = (taskId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: commentKeys.list(taskId) });
       queryClient.invalidateQueries({ queryKey: taskKeys.detail(taskId) });
+      toast.success("Comment deleted");
     },
     onError: (error: { message?: string }) => {
       toast.error(error?.message ?? "Failed to delete comment");

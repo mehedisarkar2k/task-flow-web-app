@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth-client";
-import { CheckCircle2, AtSign, Package } from "lucide-react";
+
 import { useSystemConfig } from "@/hooks/queries/use-system-config";
 import { getImageUrl } from "@/utils/image";
 import { useNotificationsQuery } from "@/services/query/use-notifications-query";

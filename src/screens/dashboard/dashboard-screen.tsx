@@ -29,8 +29,8 @@ export const DashboardScreen = () => {
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
           Welcome back,{" "}
-          <span className="font-medium text-foreground">{user?.name ?? "..."}</span> — here&apos;s a
-          summary of your workspace activities.
+          <span className="font-medium text-foreground">{user?.name ?? "..."}</span>
+          {" — here's a summary of your workspace activities."}
         </p>
       </header>
 

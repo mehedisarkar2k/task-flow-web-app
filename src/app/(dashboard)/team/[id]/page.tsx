@@ -7,11 +7,12 @@ export const metadata: Metadata = {
 };
 
 interface MemberDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
-  return <MemberDetailsScreen memberId={params.id} />;
+export default async function MemberDetailsPage({ params }: MemberDetailsPageProps) {
+  const { id } = await params;
+  return <MemberDetailsScreen memberId={id} />;
 }
