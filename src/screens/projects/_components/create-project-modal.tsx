@@ -63,6 +63,7 @@ export const CreateProjectModal = ({
   useEffect(() => {
     if (!open) return;
     if (isEdit && project) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm({
         name: project.name,
         description: project.description ?? "",

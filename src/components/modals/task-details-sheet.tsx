@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Link as LinkIcon, Paperclip, Plus, MessageSquare } from "lucide-react";
+import { Link as LinkIcon, Paperclip, Plus, MessageSquare } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -42,7 +42,6 @@ export const TaskDetailsSheet = ({
   const [estimatedTime, setEstimatedTime] = useState(task?.estimatedTime || "");
 
   // Reset state when task or mode changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect

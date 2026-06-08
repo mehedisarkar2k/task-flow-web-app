@@ -81,6 +81,7 @@ export const TaskFormSheet = ({
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && task) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProjectId(task.project?.id ?? "");
       setTitle(task.title);
       setDescription(task.description ?? "");

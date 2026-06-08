@@ -12,7 +12,7 @@ interface ServerAssignee {
   image: string | null;
 }
 
-interface ServerTask {
+export interface ServerTask {
   id: string;
   title: string;
   description: string | null;
@@ -72,7 +72,7 @@ export interface TaskListResult {
 
 // ─── Mapper ──────────────────────────────────────────────────────────────────
 
-const toTask = (t: ServerTask): Task => ({
+export const toTask = (t: ServerTask): Task => ({
   id: t.id,
   title: t.title,
   description: t.description ?? undefined,

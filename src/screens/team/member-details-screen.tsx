@@ -1,82 +1,165 @@
-import { ChevronRight, MessageSquare, CalendarPlus, MoreVertical } from "lucide-react";
+"use client";
+
+import { ChevronRight, Loader2, TriangleAlert, Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useAuth } from "@/hooks/use-auth";
+import { useSystemConfig } from "@/hooks/queries/use-system-config";
+import { useTeamMember, useTeamMemberTasks } from "@/services/query/use-team";
+import { useChangeUserRoleMutation } from "@/services/mutation/use-user-mutations";
+import { getImageUrl } from "@/utils/image";
 import { MemberTasks } from "./_components/member-tasks";
 import { MemberWorkloadChart } from "./_components/member-workload-chart";
 import { MemberSkillset } from "./_components/member-skillset";
 import { MemberActivity } from "./_components/member-activity";
+import type { GlobalRole } from "./types";
 
-interface MemberDetailsScreenProps {
-  memberId: string;
-}
+const roleLabel: Record<GlobalRole, string> = {
+  ADMIN: "Admin",
+  PM: "Project Manager",
+  MEMBER: "Member",
+};
 
-export const MemberDetailsScreen = ({ memberId }: MemberDetailsScreenProps) => {
+const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+
+export const MemberDetailsScreen = ({ memberId }: { memberId: string }) => {
+  const router = useRouter();
+  const { user, isAdmin } = useAuth();
+  const { data: config } = useSystemConfig();
+  const { data: member, isLoading, isError, error } = useTeamMember(memberId);
+  const { data: tasksResult, isLoading: tasksLoading } = useTeamMemberTasks(memberId, { limit: 10 });
+  const changeRole = useChangeUserRoleMutation();
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-24 gap-3 text-muted-foreground">
+        <Loader2 className="size-6 animate-spin" />
+        <p className="text-sm">Loading member…</p>
+      </div>
+    );
+  }
+
+  if (isError || !member) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full py-24 gap-3">
+        <TriangleAlert className="size-8 text-destructive" />
+        <p className="text-sm text-muted-foreground">
+          {(error as Error)?.message ?? "This member could not be found."}
+        </p>
+        <Button variant="outline" onClick={() => router.push("/team")}>
+          Back to Team
+        </Button>
+      </div>
+    );
+  }
+
+  const avatarUrl = getImageUrl(member.image, config?.profileImageBaseUrl);
+  const canChangeRole = isAdmin && user?.id !== member.id;
+
   return (
     <div className="flex flex-col h-full w-full">
       <div className="max-w-[1200px] mx-auto w-full pb-10">
-        
         {/* Breadcrumbs */}
         <div className="hidden md:flex items-center gap-2 text-xs font-sans text-muted-foreground mb-8">
           <Link href="/team" className="hover:text-primary transition-colors">
             Team
           </Link>
           <ChevronRight className="size-4" />
-          <span className="text-foreground">Member Profile</span>
+          <span className="text-foreground">{member.name}</span>
         </div>
 
-        {/* Header Profile Section */}
+        {/* Header */}
         <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-6">
-            <img
-              alt="Member Photo"
-              className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-border object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuChXCBazACfyUtU4jVRE06dgmFK7-afxyzW7fusidAjZOHK3GnU1qut3HV4EPx-S1XSdt5PzcZn25sJW63s5Jlx5WrEGDolqKIbBH8xLqsFNNZaUAYX74IRx2x1G5wzg9xUdVWMM3tNijtAkixy_hc_6T9UgXujt2lGjJS57r8xJCvt-2PK2ZNIfNpnPxzCrQMq9dBEk4o13AiSsEdewIPUUi4UN_lpCcpr4rSL3vyC4xtmQgDZ1lQXqdVQnmnn9eoZoHAmolzaFS4"
-            />
+            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-border bg-muted overflow-hidden flex items-center justify-center shrink-0">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt={member.name} className="w-full h-full object-cover" src={avatarUrl} />
+              ) : (
+                <span className="font-heading text-3xl font-semibold text-muted-foreground">
+                  {initials(member.name)}
+                </span>
+              )}
+            </div>
             <div>
               <h1 className="font-heading text-3xl md:text-4xl text-foreground font-bold mb-1 tracking-tight">
-                Julian Barnes
+                {member.name}
               </h1>
               <p className="font-sans text-lg text-muted-foreground mb-2">
-                Senior Frontend Developer
+                {member.jobTitle || roleLabel[member.role]}
               </p>
-              <div className="flex items-center gap-2 font-mono text-sm text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
-                <span>Online</span>
-                <span className="mx-2">•</span>
-                <span>London, UK</span>
+              <div className="flex flex-wrap items-center gap-2 font-mono text-sm text-muted-foreground">
+                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                  {roleLabel[member.role]}
+                </span>
+                {member.location && (
+                  <span className="flex items-center gap-1">
+                    <MapPin className="size-3.5" />
+                    {member.location}
+                  </span>
+                )}
               </div>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4 w-full md:w-auto mt-4 md:mt-0">
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-muted/50 border border-border text-primary font-sans font-medium text-sm px-4 py-2 rounded-lg hover:bg-muted transition-colors">
-              <MessageSquare className="size-4" />
-              Message
-            </button>
-            <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-primary text-primary-foreground font-sans font-medium text-sm px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
-              <CalendarPlus className="size-4" />
-              Schedule
-            </button>
-            <button className="flex-none p-2 border border-border rounded-lg text-muted-foreground hover:bg-muted transition-colors">
-              <MoreVertical className="size-5" />
-            </button>
+
+          {/* Contact + admin role control */}
+          <div className="flex flex-col gap-3 w-full md:w-auto">
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+              <a
+                href={`mailto:${member.email}`}
+                className="flex items-center gap-2 hover:text-primary transition-colors"
+              >
+                <Mail className="size-4" />
+                {member.email}
+              </a>
+              {member.phone && (
+                <span className="flex items-center gap-2">
+                  <Phone className="size-4" />
+                  {member.phone}
+                </span>
+              )}
+            </div>
+
+            {canChangeRole && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">Role</span>
+                <NativeSelect
+                  className="w-40"
+                  value={member.role}
+                  disabled={changeRole.isPending}
+                  onChange={(e) =>
+                    changeRole.mutate({ userId: member.id, role: e.target.value as GlobalRole })
+                  }
+                >
+                  <NativeSelectOption value="MEMBER">Member</NativeSelectOption>
+                  <NativeSelectOption value="PM">Project Manager</NativeSelectOption>
+                  <NativeSelectOption value="ADMIN">Admin</NativeSelectOption>
+                </NativeSelect>
+              </div>
+            )}
           </div>
         </header>
 
-        {/* Bento Grid Layout */}
+        {/* Bento grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Current Tasks */}
           <div className="lg:col-span-8 flex flex-col gap-6">
-            <MemberTasks />
+            <MemberTasks tasks={tasksResult?.tasks ?? []} isLoading={tasksLoading} />
           </div>
-          
-          {/* Right Column: Stats & Meta */}
+
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <MemberWorkloadChart />
-            <MemberSkillset />
+            <MemberWorkloadChart workload={member.workload} />
+            <MemberSkillset skills={member.skills} />
             <MemberActivity />
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -1,12 +1,10 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { profileApi, UpdateProfileData } from '@/services/api/profile';
 import { uploadFileToPresignedUrl } from '@/lib/upload';
-import { changePassword, updateUser } from '@/lib/auth-client';
+import { changePassword } from '@/lib/auth-client';
 import { toast } from 'sonner';
 
 export const useUpdateProfileMutation = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (data: UpdateProfileData) => profileApi.updateProfile(data),
     onSuccess: () => {
@@ -57,8 +55,6 @@ export const useUpdatePreferencesMutation = () => {
 };
 
 export const useUploadAvatarMutation = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (file: File) => {
       const data = await profileApi.requestAvatarUploadUrl({
@@ -87,8 +83,6 @@ export const useUploadAvatarMutation = () => {
 };
 
 export const useRemoveAvatarMutation = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: () => profileApi.removeAvatar(),
     onSuccess: () => {

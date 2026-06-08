@@ -39,8 +39,10 @@ export const LoginScreen = () => {
 
       toast.success("Successfully logged in");
       router.push("/dashboard");
-    } catch (err: any) {
-      toast.error(err.message || "A network error occurred. Please try again.");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "A network error occurred. Please try again.";
+      toast.error(message);
     } finally {
       setLoading(false);
     }

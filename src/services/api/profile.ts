@@ -9,6 +9,7 @@ export interface UpdateProfileData {
   jobTitle?: string;
   department?: string;
   location?: string;
+  phone?: string;
   bio?: string;
   skills?: string[];
   theme?: "LIGHT" | "DARK" | "SYSTEM";

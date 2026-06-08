@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Calendar, ChevronRight, ListTodo } from "lucide-react";
+import { Calendar, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/screens/projects/_components/status-badge";
 import { MemberAvatarGroup } from "@/screens/projects/_components/member-avatar-group";

@@ -60,7 +60,8 @@ export const CommentThread = ({ comments }: CommentThreadProps) => {
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-4">
             {comment.author.avatar ? (
-              <img 
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={comment.author.avatar} 
                 alt={comment.author.name}
                 className="w-8 h-8 rounded-full border border-outline-variant object-cover mt-1 shrink-0" 

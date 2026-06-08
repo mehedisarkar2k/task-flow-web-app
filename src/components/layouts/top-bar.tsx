@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/popover";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth-client";
-import { CheckCircle2, AtSign, Package, UserPlus } from "lucide-react";
+import { CheckCircle2, AtSign, Package } from "lucide-react";
 import { useSystemConfig } from "@/hooks/queries/use-system-config";
 import { getImageUrl } from "@/utils/image";
 
@@ -56,6 +56,7 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -170,6 +171,7 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
               <div className="p-4 border-b border-border bg-muted/20 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3 relative group">
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
                 <div className="w-8 h-8 rounded-full bg-secondary shrink-0 mt-0.5 overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     alt="Avatar"
                     className="w-full h-full object-cover"

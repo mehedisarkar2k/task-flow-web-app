@@ -49,6 +49,7 @@ export const KanbanBoard = ({ projectId, columns: incoming, canManage = false }:
     .map((c) => `${c.id}:${c.tasks.map((t) => t.id).join(",")}`)
     .join("|");
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setColumns(incoming);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [signature]);

@@ -3,9 +3,11 @@
 import { Camera, Sun, Moon, Settings, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { useTeamMember } from "@/services/query/use-team";
 import { useTheme } from "next-themes";
 import { useRef, useState, useEffect } from "react";
 import {
@@ -29,6 +31,18 @@ export const ProfileScreen = () => {
     lastName: "",
     email: "",
   });
+
+  // Professional details (sourced from the team self-profile, which has every field).
+  const { data: ownProfile } = useTeamMember(user?.id ?? "");
+  const [pro, setPro] = useState({
+    jobTitle: "",
+    department: "",
+    location: "",
+    phone: "",
+    bio: "",
+    skills: "",
+  });
+  const [proInit, setProInit] = useState(false);
 
   const [notifications, setNotifications] = useState({
     emailSummaries: true,
@@ -76,6 +90,7 @@ export const ProfileScreen = () => {
         finalLastName = parts.slice(1).join(" ");
       }
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         firstName: finalFirstName,
         lastName: finalLastName,
@@ -83,14 +98,29 @@ export const ProfileScreen = () => {
       });
 
       setNotifications({
-        emailSummaries: (user as any).emailSummaries ?? false,
-        mentionAlerts: (user as any).mentionAlerts ?? false,
-        marketingUpdates: (user as any).marketingUpdates ?? false,
+        emailSummaries: user.emailSummaries ?? false,
+        mentionAlerts: user.mentionAlerts ?? false,
+        marketingUpdates: user.marketingUpdates ?? false,
       });
 
       setIsInitialized(true);
     }
   }, [user, isInitialized, user?.id]);
+
+  useEffect(() => {
+    if (ownProfile && !proInit) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPro({
+        jobTitle: ownProfile.jobTitle ?? "",
+        department: ownProfile.department ?? "",
+        location: ownProfile.location ?? "",
+        phone: ownProfile.phone ?? "",
+        bio: ownProfile.bio ?? "",
+        skills: (ownProfile.skills ?? []).join(", "),
+      });
+      setProInit(true);
+    }
+  }, [ownProfile, proInit]);
 
   const userInitials = user?.name
     ? user.name
@@ -129,6 +159,15 @@ export const ProfileScreen = () => {
     updateProfile.mutate({
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
+      jobTitle: pro.jobTitle.trim(),
+      department: pro.department.trim(),
+      location: pro.location.trim(),
+      phone: pro.phone.trim(),
+      bio: pro.bio.trim(),
+      skills: pro.skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
     }, {
       onSuccess: () => {
         window.location.reload();
@@ -209,6 +248,7 @@ export const ProfileScreen = () => {
               <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileChange} />
               <div className="w-20 h-20 rounded-full border border-border overflow-hidden bg-muted flex items-center justify-center text-xl font-medium text-muted-foreground">
                 {user?.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     alt="Current Avatar"
                     className="w-full h-full object-cover"
@@ -269,6 +309,69 @@ export const ProfileScreen = () => {
               <p className="text-xs text-muted-foreground mt-1">
                 Contact your administrator to change your organizational role.
               </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
+                Job Title
+              </Label>
+              <Input
+                value={pro.jobTitle}
+                onChange={(e) => setPro({ ...pro, jobTitle: e.target.value })}
+                placeholder="e.g. Senior Frontend Developer"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
+                Department
+              </Label>
+              <Input
+                value={pro.department}
+                onChange={(e) => setPro({ ...pro, department: e.target.value })}
+                placeholder="e.g. Engineering"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
+                Location
+              </Label>
+              <Input
+                value={pro.location}
+                onChange={(e) => setPro({ ...pro, location: e.target.value })}
+                placeholder="e.g. London, UK"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
+                Phone
+              </Label>
+              <Input
+                value={pro.phone}
+                onChange={(e) => setPro({ ...pro, phone: e.target.value })}
+                placeholder="e.g. +44 20 1234 5678"
+              />
+            </div>
+            <div className="md:col-span-2 space-y-1.5">
+              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
+                Bio
+              </Label>
+              <Textarea
+                rows={3}
+                value={pro.bio}
+                onChange={(e) => setPro({ ...pro, bio: e.target.value })}
+                placeholder="A short professional bio."
+              />
+            </div>
+            <div className="md:col-span-2 space-y-1.5">
+              <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
+                Skills
+              </Label>
+              <Input
+                value={pro.skills}
+                onChange={(e) => setPro({ ...pro, skills: e.target.value })}
+                placeholder="Comma-separated, e.g. React, TypeScript, Figma"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Separate skills with commas.</p>
             </div>
           </div>
 
@@ -483,7 +586,7 @@ export const ProfileScreen = () => {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 pt-4 border-t border-border gap-4">
             <p className="text-xs text-muted-foreground">
-              Last profile update: <span className="font-mono">{(user as any)?.updatedAt ? new Date((user as any).updatedAt).toLocaleDateString() : 'N/A'}</span>
+              Last profile update: <span className="font-mono">{user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : 'N/A'}</span>
             </p>
             <Button
               variant="secondary"

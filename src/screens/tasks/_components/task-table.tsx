@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,

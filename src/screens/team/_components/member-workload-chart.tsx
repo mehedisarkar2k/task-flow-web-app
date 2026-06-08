@@ -1,32 +1,54 @@
-export const MemberWorkloadChart = () => {
+import { cn } from "@/lib/utils";
+import type { Workload } from "../types";
+
+interface MemberWorkloadChartProps {
+  workload: Workload;
+}
+
+export const MemberWorkloadChart = ({ workload }: MemberWorkloadChartProps) => {
+  const { total, completed, pending, percentage } = workload;
+  const isHigh = percentage >= 90;
+
+  const stats = [
+    { label: "Total", value: total },
+    { label: "Completed", value: completed },
+    { label: "Pending", value: pending },
+  ];
+
   return (
     <section className="bg-card border border-border rounded-xl p-6 transition-colors duration-200">
       <h2 className="font-heading text-2xl font-semibold text-foreground mb-4">Workload</h2>
-      <div className="flex items-end gap-2 h-32 mb-4 border-b border-border pb-2">
-        <div className="flex-1 flex flex-col justify-end items-center group">
-          <div className="w-full bg-muted rounded-t-sm group-hover:bg-primary/20 transition-colors h-[40%]" />
-          <span className="font-mono text-[10px] text-muted-foreground mt-1">M</span>
-        </div>
-        <div className="flex-1 flex flex-col justify-end items-center group">
-          <div className="w-full bg-primary rounded-t-sm group-hover:bg-primary/80 transition-colors h-[80%]" />
-          <span className="font-mono text-[10px] text-foreground font-bold mt-1">T</span>
-        </div>
-        <div className="flex-1 flex flex-col justify-end items-center group">
-          <div className="w-full bg-muted rounded-t-sm group-hover:bg-primary/20 transition-colors h-[60%]" />
-          <span className="font-mono text-[10px] text-muted-foreground mt-1">W</span>
-        </div>
-        <div className="flex-1 flex flex-col justify-end items-center group">
-          <div className="w-full bg-accent/30 rounded-t-sm group-hover:bg-accent/40 transition-colors h-[95%]" />
-          <span className="font-mono text-[10px] text-accent mt-1 font-bold">T</span>
-        </div>
-        <div className="flex-1 flex flex-col justify-end items-center group">
-          <div className="w-full bg-muted rounded-t-sm group-hover:bg-primary/20 transition-colors h-[30%]" />
-          <span className="font-mono text-[10px] text-muted-foreground mt-1">F</span>
-        </div>
+
+      <div className="grid grid-cols-3 gap-2 mb-5">
+        {stats.map((s) => (
+          <div key={s.label} className="flex flex-col items-center bg-muted/30 rounded-lg py-3">
+            <span className="font-mono text-2xl font-bold text-foreground">{s.value}</span>
+            <span className="font-sans text-xs text-muted-foreground mt-1">{s.label}</span>
+          </div>
+        ))}
       </div>
-      <div className="flex justify-between items-center text-xs font-sans text-muted-foreground">
-        <span>This Week</span>
-        <span className="font-mono text-accent font-medium">38h / 40h</span>
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex justify-between items-center">
+          <span className="font-sans text-sm text-muted-foreground">Load</span>
+          <span
+            className={cn(
+              "font-mono text-sm font-medium",
+              isHigh ? "text-accent" : "text-primary",
+            )}
+          >
+            {percentage}%
+          </span>
+        </div>
+        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-500",
+              isHigh ? "bg-accent" : "bg-primary",
+            )}
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
       </div>
     </section>
   );

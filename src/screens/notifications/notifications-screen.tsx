@@ -74,8 +74,8 @@ export const NotificationsScreen = () => {
                   <span className="font-medium">Q3 Marketing Launch</span>
                 </p>
                 <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                  "Can you review the latest draft of the landing page copy? I need your sign-off
-                  before we push to staging."
+                  &quot;Can you review the latest draft of the landing page copy? I need your sign-off
+                  before we push to staging.&quot;
                 </p>
                 <span className="text-xs font-mono text-muted-foreground">10m ago</span>
               </div>
@@ -142,6 +142,7 @@ export const NotificationsScreen = () => {
         <div className="bg-background border border-border rounded-xl p-6 hover:bg-muted/50 transition-colors duration-200 relative group opacity-80">
           <div className="ml-2 pl-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 alt="Marcus Chen"
                 className="w-10 h-10 rounded-full shrink-0 border border-border object-cover"
@@ -153,7 +154,7 @@ export const NotificationsScreen = () => {
                   <span className="font-medium">Website Redesign</span>
                 </p>
                 <p className="text-xs text-muted-foreground mb-2">
-                  "Finalize typography scale configuration"
+                  &quot;Finalize typography scale configuration&quot;
                 </p>
                 <span className="text-xs font-mono text-muted-foreground">2d ago</span>
               </div>

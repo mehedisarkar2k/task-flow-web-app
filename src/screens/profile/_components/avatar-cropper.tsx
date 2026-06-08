@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import Cropper from 'react-easy-crop';
+import Cropper, { type Area } from 'react-easy-crop';
 import {
   Dialog,
   DialogContent,
@@ -84,7 +84,7 @@ export const AvatarCropperModal = ({
   const [isCropping, setIsCropping] = useState(false);
 
   const handleCropComplete = useCallback(
-    (croppedArea: any, croppedAreaPixels: any) => {
+    (_croppedArea: Area, croppedAreaPixels: Area) => {
       setCroppedAreaPixels(croppedAreaPixels);
     },
     []

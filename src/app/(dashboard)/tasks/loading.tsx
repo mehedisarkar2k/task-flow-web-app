@@ -1,6 +1,3 @@
-import { Filter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
 export default function TasksLoading() {
   return (
     <div className="flex flex-col h-full gap-6 max-w-[1200px] mx-auto w-full px-4 md:px-8 py-8 animate-pulse">
