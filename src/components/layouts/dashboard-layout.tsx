@@ -39,7 +39,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         {/* Scrollable Page Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+          <div className="p-4 lg:p-6 xl:p-8 max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>
