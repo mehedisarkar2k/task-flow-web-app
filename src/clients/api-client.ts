@@ -19,7 +19,7 @@ apiClient.interceptors.response.use(
   (error: AxiosError<ApiResponse>) => {
     // Normalize error response so it always matches the ApiResponse format
     let message = error.response?.data?.message || error.message || 'An unexpected error occurred';
-    
+
     // If there are validation errors, provide the first one as the main message for better UX
     if (error.response?.data?.errors && error.response.data.errors.length > 0) {
       const firstError = error.response.data.errors[0];

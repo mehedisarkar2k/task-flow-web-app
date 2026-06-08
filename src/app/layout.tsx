@@ -63,6 +63,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
+
 const RootLayout = ({
   children,
 }: Readonly<{
@@ -84,6 +86,7 @@ const RootLayout = ({
           >
             <SplashScreen />
             {children}
+            <AssistantWidget />
             <Toaster />
           </ThemeProvider>
         </QueryProvider>
