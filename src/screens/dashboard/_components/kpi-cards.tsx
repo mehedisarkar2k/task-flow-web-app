@@ -8,7 +8,7 @@ import {
   Minus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { KPI_STATS, type KpiStat } from "@/screens/dashboard/types";
+import type { KpiStat } from "@/screens/dashboard/types";
 import type { LucideIcon } from "lucide-react";
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -78,12 +78,12 @@ const KpiCard = ({ stat }: { stat: KpiStat }) => {
   );
 };
 
-export const KpiCards = () => (
+export const KpiCards = ({ stats }: { stats: KpiStat[] }) => (
   <section
     aria-label="Key performance indicators"
     className="grid grid-cols-2 xl:grid-cols-5 gap-3"
   >
-    {KPI_STATS.map((stat, i) => (
+    {stats.map((stat, i) => (
       /* Last card spans 2 cols on the 2-col mobile grid so it's centred */
       <div
         key={stat.id}

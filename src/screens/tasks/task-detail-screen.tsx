@@ -124,8 +124,8 @@ export const TaskDetailScreen = ({ taskId }: { taskId: string }) => {
 
           <hr className="border-outline-variant/60 my-4" />
 
-          {/* Comments — discussion feature is wired separately */}
-          <CommentThread comments={[]} />
+          {/* Comments — task discussion thread */}
+          <CommentThread taskId={taskId} />
         </div>
 
         {/* Right Column */}

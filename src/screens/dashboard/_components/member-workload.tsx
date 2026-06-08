@@ -1,6 +1,6 @@
 import { BarChart2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { WORKLOAD_ITEMS, type WorkloadItem } from "@/screens/dashboard/types";
+import type { WorkloadItem } from "@/screens/dashboard/types";
 
 const WorkloadRow = ({ item }: { item: WorkloadItem }) => (
   <div className="flex items-center gap-3">
@@ -29,7 +29,7 @@ const WorkloadRow = ({ item }: { item: WorkloadItem }) => (
   </div>
 );
 
-export const MemberWorkload = () => (
+export const MemberWorkload = ({ items }: { items: WorkloadItem[] }) => (
   <div className="bg-card rounded-xl border border-border overflow-hidden">
     {/* Header */}
     <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/30">
@@ -37,10 +37,16 @@ export const MemberWorkload = () => (
       <BarChart2 className="size-4 text-muted-foreground" />
     </div>
 
-    <div className="px-5 py-5 flex flex-col gap-4">
-      {WORKLOAD_ITEMS.map((item) => (
-        <WorkloadRow key={item.id} item={item} />
-      ))}
-    </div>
+    {items.length === 0 ? (
+      <p className="text-sm text-muted-foreground px-5 py-6 text-center">
+        No assigned work yet.
+      </p>
+    ) : (
+      <div className="px-5 py-5 flex flex-col gap-4">
+        {items.map((item) => (
+          <WorkloadRow key={item.id} item={item} />
+        ))}
+      </div>
+    )}
   </div>
 );

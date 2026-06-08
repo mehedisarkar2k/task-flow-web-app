@@ -1,6 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DEADLINE_ITEMS, type DeadlineItem } from "@/screens/dashboard/types";
+import type { DeadlineItem } from "@/screens/dashboard/types";
 
 const DOT_COLOR: Record<DeadlineItem["urgency"], string> = {
   overdue: "bg-destructive",
@@ -36,7 +36,7 @@ const DeadlineRow = ({ item }: { item: DeadlineItem }) => (
   </li>
 );
 
-export const UpcomingDeadlines = () => (
+export const UpcomingDeadlines = ({ items }: { items: DeadlineItem[] }) => (
   <div className="bg-card rounded-xl border border-border overflow-hidden">
     {/* Header */}
     <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-muted/30">
@@ -46,10 +46,16 @@ export const UpcomingDeadlines = () => (
       <CalendarDays className="size-4 text-muted-foreground" />
     </div>
 
-    <ul>
-      {DEADLINE_ITEMS.map((item) => (
-        <DeadlineRow key={item.id} item={item} />
-      ))}
-    </ul>
+    {items.length === 0 ? (
+      <p className="text-sm text-muted-foreground px-5 py-6 text-center">
+        No upcoming deadlines.
+      </p>
+    ) : (
+      <ul>
+        {items.map((item) => (
+          <DeadlineRow key={item.id} item={item} />
+        ))}
+      </ul>
+    )}
   </div>
 );
