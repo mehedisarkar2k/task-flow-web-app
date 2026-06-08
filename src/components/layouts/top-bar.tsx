@@ -25,6 +25,11 @@ import { signOut } from "@/lib/auth-client";
 import { CheckCircle2, AtSign, Package } from "lucide-react";
 import { useSystemConfig } from "@/hooks/queries/use-system-config";
 import { getImageUrl } from "@/utils/image";
+import { useNotificationsQuery } from "@/services/query/use-notifications-query";
+import { useUnreadCountQuery } from "@/services/query/use-unread-count-query";
+import { useMarkAllAsReadMutation, useMarkAsReadMutation } from "@/services/mutation/use-notification-mutations";
+import { formatDistanceToNow } from "date-fns";
+import type { Notification } from "@/types/notification.types";
 
 import { useEffect, useState } from "react";
 
@@ -52,6 +57,11 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
   const { data: config } = useSystemConfig();
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+
+  const { data: notificationsData } = useNotificationsQuery({ page: 1, limit: 5 });
+  const { data: unreadData } = useUnreadCountQuery();
+  const { mutate: markAllAsRead } = useMarkAllAsReadMutation();
+  const { mutate: markAsRead } = useMarkAsReadMutation();
 
   const router = useRouter();
 
@@ -138,77 +148,62 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
               aria-label="View notifications"
             >
               <Bell className="size-5" />
-              <span
-                className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-card"
-                aria-label="Unread notifications"
-              />
+              {unreadData?.data?.count ? (
+                <span
+                  className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-card"
+                  aria-label="Unread notifications"
+                />
+              ) : null}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-[380px] p-0 border-border bg-card shadow-md flex flex-col z-50">
             {/* Popover Header */}
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">Notifications</h2>
-              <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors bg-transparent border-none cursor-pointer">
+              <button 
+                onClick={() => markAllAsRead()}
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors bg-transparent border-none cursor-pointer"
+              >
                 Mark all as read
               </button>
             </div>
             {/* Popover List */}
             <div className="max-h-[400px] overflow-y-auto flex flex-col">
-              {/* Item: Mention (Unread) */}
-              <div className="p-4 border-b border-border bg-muted/20 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3 relative group">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
-                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                  <AtSign className="size-4" />
+              {notificationsData?.data && notificationsData.data.length > 0 ? (
+                notificationsData.data.map((notification: Notification) => (
+                  <div 
+                    key={notification.id}
+                    onClick={() => {
+                      if (!notification.isRead) markAsRead(notification.id);
+                    }}
+                    className={`p-4 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer flex gap-3 relative group ${!notification.isRead ? 'bg-muted/20' : ''}`}
+                  >
+                    {!notification.isRead && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
+                    )}
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 overflow-hidden">
+                      {notification.actor?.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={getImageUrl(notification.actor.image, config?.profileImageBaseUrl) || undefined} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <Bell className="size-4" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground leading-tight">
+                        {notification.message}
+                      </p>
+                      <p className="font-mono text-muted-foreground text-xs mt-1">
+                        {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center text-muted-foreground text-sm">
+                  No notifications yet.
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground leading-tight">
-                    <span className="font-medium">Sarah Jenkins</span> mentioned you in <span className="font-medium text-primary">Q3 Campaign Launch</span>.
-                  </p>
-                  <p className="font-mono text-muted-foreground text-xs mt-1">10 min ago</p>
-                </div>
-              </div>
-              {/* Item: Task Assignment (Unread) */}
-              <div className="p-4 border-b border-border bg-muted/20 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3 relative group">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
-                <div className="w-8 h-8 rounded-full bg-secondary shrink-0 mt-0.5 overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    alt="Avatar"
-                    className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwyJvZ-Yheh3Gh9SMrJCoVI4rfLR42kq7w1U70HFW4A-pANCy04qo4vTyi_4zwGtkuXvr6EiIEves_f9ea_X-yPMuWwith0HR0fxA3hKLMS-GS_MKknWcljHneyWqjNUxlap5yZoPfYAv_TN_01hve8bnYwXA3qsIJ1qBsHUwh36a9pYwY6ew5CN5JVlqDaPxnfzNDoSDW0fk-C-9Dp1xyv0IqmwRd0wMa9k-f37oapdYOitVqyl9FUwM7s6M8OUOgWqGewnc6ogs"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-foreground leading-tight">
-                    <span className="font-medium">David Chen</span> assigned a new task: <span className="font-medium text-primary">Draft Executive Summary</span>.
-                  </p>
-                  <p className="font-mono text-muted-foreground text-xs mt-1">1 hour ago</p>
-                </div>
-              </div>
-              {/* Item: Status Change (Read) */}
-              <div className="p-4 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer flex gap-3">
-                <div className="w-8 h-8 rounded-full border border-border bg-muted/30 text-muted-foreground flex items-center justify-center shrink-0 mt-0.5">
-                  <CheckCircle2 className="size-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground leading-tight">
-                    Status changed to <span className="inline-block px-2 py-0.5 rounded-full bg-muted text-foreground text-xs font-medium">Completed</span> for task <span className="text-foreground">Update Brand Assets</span>.
-                  </p>
-                  <p className="font-mono text-muted-foreground text-xs mt-1">Yesterday</p>
-                </div>
-              </div>
-              {/* Item: System Alert (Read) */}
-              <div className="p-4 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3">
-                <div className="w-8 h-8 rounded-full border border-border bg-muted/30 text-muted-foreground flex items-center justify-center shrink-0 mt-0.5">
-                  <Package className="size-4" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground leading-tight">
-                    Weekly workspace backup completed successfully.
-                  </p>
-                  <p className="font-mono text-muted-foreground text-xs mt-1">Oct 24, 2023</p>
-                </div>
-              </div>
+              )}
             </div>
             {/* Popover Footer */}
             <div className="px-4 py-2 bg-muted/30 rounded-b-xl border-t border-border text-center">
