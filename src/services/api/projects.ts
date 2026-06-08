@@ -55,6 +55,45 @@ export interface ProjectListResult {
   meta: PaginationMeta;
 }
 
+interface ServerProjectDetailMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  projectRole: "LEAD" | "MEMBER";
+  addedAt: string;
+}
+
+interface ServerProjectDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  deadline: string | null;
+  status: ProjectStatus;
+  createdBy: { id: string; name: string };
+  progress: { total: number; completed: number; percentage: number };
+  members: ServerProjectDetailMember[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectDetail {
+  id: string;
+  name: string;
+  description: string;
+  status: ProjectStatus;
+  deadline: string | null;
+  dueDate: string;
+  progress: number;
+  createdBy: { id: string; name: string };
+  members: {
+    id: string;
+    name: string;
+    email: string;
+    projectRole: "LEAD" | "MEMBER";
+  }[];
+}
+
 // ─── Mappers ──────────────────────────────────────────────────────────────────
 
 const initialsOf = (name: string) =>
@@ -107,6 +146,27 @@ export const projectsApi = {
       totalPages: 1,
     };
     return { projects: (response.data.data ?? []).map(toProject), meta };
+  },
+
+  getById: async (id: string): Promise<ProjectDetail> => {
+    const response = await apiClient.get<ApiResponse<ServerProjectDetail>>(`/projects/${id}`);
+    const p = response.data.data!;
+    return {
+      id: p.id,
+      name: p.name,
+      description: p.description ?? "",
+      status: p.status,
+      deadline: p.deadline,
+      dueDate: p.deadline ? formatDueDate(p.deadline) : "No deadline",
+      progress: p.progress.percentage,
+      createdBy: p.createdBy,
+      members: p.members.map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        projectRole: m.projectRole,
+      })),
+    };
   },
 
   create: async (data: CreateProjectData) => {

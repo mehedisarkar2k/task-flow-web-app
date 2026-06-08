@@ -30,6 +30,8 @@ interface TaskFormSheetProps {
   task?: Task; // required in edit mode
   /** Pre-selected project (e.g. when adding from a project board). */
   defaultProjectId?: string;
+  /** Target board column for the new task (only honoured for defaultProjectId). */
+  defaultColumnId?: string;
 }
 
 const todayIso = () => new Date().toISOString().split("T")[0];
@@ -53,6 +55,7 @@ export const TaskFormSheet = ({
   mode,
   task,
   defaultProjectId,
+  defaultColumnId,
 }: TaskFormSheetProps) => {
   const createTask = useCreateTaskMutation();
   const updateTask = useUpdateTaskMutation();
@@ -137,6 +140,11 @@ export const TaskFormSheet = ({
             status: parsed.data.status,
             estimatedMinutes,
             assigneeIds: assigneeIds.length ? assigneeIds : undefined,
+            // Only honour the target column when creating within its own project.
+            columnId:
+              defaultColumnId && parsed.data.projectId === defaultProjectId
+                ? defaultColumnId
+                : undefined,
           },
         },
         { onSuccess: () => onOpenChange(false) },

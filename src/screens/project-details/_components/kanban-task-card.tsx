@@ -14,6 +14,7 @@ interface KanbanTaskCardProps {
   task: KanbanTask;
   index: number;
   isCompleted?: boolean;
+  canManage?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
   onView?: () => void;
@@ -34,6 +35,7 @@ export const KanbanTaskCard = ({
   task,
   index,
   isCompleted,
+  canManage = false,
   onEdit,
   onDelete,
   onView,
@@ -75,8 +77,8 @@ export const KanbanTaskCard = ({
             >
               {task.title}
             </h4>
-            {isCompleted ? (
-              <CheckCircle className="size-4 text-primary shrink-0" />
+            {!canManage ? (
+              isCompleted ? <CheckCircle className="size-4 text-primary shrink-0" /> : null
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

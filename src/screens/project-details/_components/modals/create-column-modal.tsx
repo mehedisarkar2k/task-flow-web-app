@@ -7,13 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+type ColumnColorToken =
+  | "muted"
+  | "primary"
+  | "secondary"
+  | "destructive"
+  | "emerald"
+  | "blue";
+
 interface CreateColumnModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (title: string, colorClass: string) => void;
+  onSubmit: (title: string, color: ColumnColorToken) => void;
 }
 
-const COLUMN_COLORS = [
+const COLUMN_COLORS: { id: ColumnColorToken; class: string; label: string }[] = [
   { id: "muted", class: "bg-muted text-muted-foreground", label: "Gray" },
   { id: "primary", class: "bg-primary/20 text-primary", label: "Teal" },
   { id: "secondary", class: "bg-secondary/20 text-secondary", label: "Orange" },
@@ -32,7 +40,7 @@ export const CreateColumnModal = ({
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    onSubmit(title.trim(), selectedColor.class);
+    onSubmit(title.trim(), selectedColor.id);
     setTitle("");
     setSelectedColor(COLUMN_COLORS[0]);
     onOpenChange(false);

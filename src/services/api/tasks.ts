@@ -52,6 +52,7 @@ export interface CreateTaskData {
   estimatedMinutes?: number;
   priority: TaskPriority;
   status?: TaskStatus;
+  columnId?: string;
 }
 
 export interface UpdateTaskData {
@@ -91,6 +92,8 @@ const toTask = (t: ServerTask): Task => ({
   createdAt: t.createdAt,
   commentCount: t.commentCount,
   attachmentCount: t.attachmentCount,
+  columnId: t.columnId ?? null,
+  position: t.position,
 });
 
 // ─── API ──────────────────────────────────────────────────────────────────────
@@ -118,6 +121,13 @@ export const tasksApi = {
     return { tasks: (response.data.data ?? []).map(toTask), meta };
   },
 
+  listByProject: async (projectId: string): Promise<Task[]> => {
+    const response = await apiClient.get<ApiResponse<ServerTask[]>>(
+      `/projects/${projectId}/tasks`,
+    );
+    return (response.data.data ?? []).map(toTask);
+  },
+
   getById: async (taskId: string): Promise<Task> => {
     const response = await apiClient.get<ApiResponse<ServerTask>>(`/tasks/${taskId}`);
     return toTask(response.data.data!);
@@ -140,6 +150,14 @@ export const tasksApi = {
     const response = await apiClient.patch<ApiResponse<ServerTask>>(`/tasks/${taskId}/status`, {
       status,
     });
+    return toTask(response.data.data!);
+  },
+
+  move: async (
+    taskId: string,
+    data: { columnId: string; position: number },
+  ): Promise<Task> => {
+    const response = await apiClient.patch<ApiResponse<ServerTask>>(`/tasks/${taskId}/move`, data);
     return toTask(response.data.data!);
   },
 

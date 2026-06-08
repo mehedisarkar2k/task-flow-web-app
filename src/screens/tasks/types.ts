@@ -37,6 +37,10 @@ export interface Task {
   createdAt?: string;
   commentCount?: number;
   attachmentCount?: number;
+
+  // Board placement.
+  columnId?: string | null;
+  position?: number;
 }
 
 export type KanbanTask = Task; // Alias for backward compatibility if needed, though we should prefer Task

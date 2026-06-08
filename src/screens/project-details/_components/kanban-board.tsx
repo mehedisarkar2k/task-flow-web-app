@@ -1,25 +1,28 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { KanbanColumn } from "@/screens/project-details/_components/kanban-column";
 import { CreateColumnModal } from "@/screens/project-details/_components/modals/create-column-modal";
-import { SelectTaskModal } from "@/screens/project-details/_components/modals/select-task-modal";
-import { TaskDetailsSheet } from "@/components/modals/task-details-sheet";
+import { TaskFormSheet } from "@/screens/tasks/_components/task-form-sheet";
 import { DeleteConfirmationModal } from "@/components/modal/delete-confirmation-modal";
 import { Button } from "@/components/ui/button";
+import { useMoveTaskMutation, useDeleteTaskMutation } from "@/services/mutation/use-task-mutations";
+import {
+  useCreateColumnMutation,
+  useReorderColumnsMutation,
+} from "@/services/mutation/use-column-mutations";
+import type { ColumnColor } from "@/services/api/columns";
 import type { KanbanColumnData, KanbanTask } from "@/screens/project-details/types";
 
+// hello-pangea/dnd warns about nested scroll containers we intentionally use.
 if (typeof window !== "undefined") {
   const originalWarn = console.warn;
   console.warn = (...args) => {
-    if (
-      typeof args[0] === "string" &&
-      args[0].includes("unsupported nested scroll container")
-    ) {
+    if (typeof args[0] === "string" && args[0].includes("unsupported nested scroll container")) {
       return;
     }
     originalWarn(...args);
@@ -27,125 +30,81 @@ if (typeof window !== "undefined") {
 }
 
 interface KanbanBoardProps {
-  initialColumns: KanbanColumnData[];
+  projectId: string;
+  columns: KanbanColumnData[];
+  canManage?: boolean;
 }
 
-export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
+export const KanbanBoard = ({ projectId, columns: incoming, canManage = false }: KanbanBoardProps) => {
   const router = useRouter();
-  const [columns, setColumns] = useState<KanbanColumnData[]>(initialColumns);
+  const [columns, setColumns] = useState<KanbanColumnData[]>(incoming);
 
-  // Modal States
+  const moveTask = useMoveTaskMutation(projectId);
+  const deleteTask = useDeleteTaskMutation();
+  const createColumn = useCreateColumnMutation(projectId);
+  const reorderColumns = useReorderColumnsMutation(projectId);
+
+  // Re-sync the local (optimistic) board whenever fresh server data arrives.
+  const signature = incoming
+    .map((c) => `${c.id}:${c.tasks.map((t) => t.id).join(",")}`)
+    .join("|");
+  useEffect(() => {
+    setColumns(incoming);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
+
   const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
-  
-  const [selectTaskModal, setSelectTaskModal] = useState<{ open: boolean; columnId: string }>({
-    open: false,
-    columnId: "",
-  });
-
-  const [detailsSheet, setDetailsSheet] = useState<{ 
-    open: boolean; 
-    task?: KanbanTask; 
-    columnTitle?: string;
+  const [taskSheet, setTaskSheet] = useState<{
+    open: boolean;
+    mode: "create" | "edit";
+    task?: KanbanTask;
     columnId?: string;
-    mode?: "view" | "edit" | "create";
-  }>({
+  }>({ open: false, mode: "create" });
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; task?: KanbanTask }>({
     open: false,
   });
 
-  const [deleteModal, setDeleteModal] = useState<{ open: boolean; type: "task" | "column"; id: string; name: string; columnId?: string }>({
-    open: false,
-    type: "task",
-    id: "",
-    name: "",
-  });
+  const onDragEnd = useCallback(
+    (result: DropResult) => {
+      const { source, destination, type, draggableId } = result;
+      if (!destination) return;
+      if (source.droppableId === destination.droppableId && source.index === destination.index)
+        return;
 
-  const onDragEnd = useCallback((result: DropResult) => {
-    const { source, destination, type } = result;
-    if (!destination) return;
-    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
+      if (type === "column") {
+        const next = [...columns];
+        const [moved] = next.splice(source.index, 1);
+        next.splice(destination.index, 0, moved);
+        setColumns(next);
+        reorderColumns.mutate(next.map((c) => c.id));
+        return;
+      }
 
-    if (type === "column") {
-      setColumns((prev) => {
-        const newCols = [...prev];
-        const [movedCol] = newCols.splice(source.index, 1);
-        newCols.splice(destination.index, 0, movedCol);
-        return newCols;
-      });
-      return;
-    }
-
-    setColumns((prev) => {
-      const sourceColIndex = prev.findIndex((c) => c.id === source.droppableId);
-      const destColIndex = prev.findIndex((c) => c.id === destination.droppableId);
-      if (sourceColIndex === -1 || destColIndex === -1) return prev;
-
-      const newColumns = [...prev];
-      const sourceCol = { ...newColumns[sourceColIndex] };
-      const destCol = { ...newColumns[destColIndex] };
-
-      sourceCol.tasks = [...sourceCol.tasks];
-      destCol.tasks = sourceColIndex === destColIndex ? sourceCol.tasks : [...destCol.tasks];
+      // Task move — update local state optimistically, then persist.
+      const next = columns.map((c) => ({ ...c, tasks: [...c.tasks] }));
+      const sourceCol = next.find((c) => c.id === source.droppableId);
+      const destCol = next.find((c) => c.id === destination.droppableId);
+      if (!sourceCol || !destCol) return;
 
       const [movedTask] = sourceCol.tasks.splice(source.index, 1);
       destCol.tasks.splice(destination.index, 0, movedTask);
+      setColumns(next);
 
-      newColumns[sourceColIndex] = sourceCol;
-      newColumns[destColIndex] = destCol;
-      return newColumns;
-    });
-  }, []);
+      moveTask.mutate({
+        id: draggableId,
+        columnId: destination.droppableId,
+        position: destination.index,
+      });
+    },
+    [columns, moveTask, reorderColumns],
+  );
 
-  // Handlers
-  const handleAddColumn = (title: string) => {
-    setColumns((prev) => [
-      ...prev,
-      { id: `col-${Date.now()}`, title, tasks: [] },
-    ]);
+  const handleAddColumn = (name: string, color: ColumnColor) => {
+    createColumn.mutate({ name, color });
   };
 
-  const handleTaskSubmit = (taskData: Partial<KanbanTask>, columnId: string) => {
-    setColumns((prev) => {
-      const newCols = [...prev];
-      const colIndex = newCols.findIndex((c) => c.id === columnId);
-      if (colIndex === -1) return prev;
-
-      const col = { ...newCols[colIndex], tasks: [...newCols[colIndex].tasks] };
-
-      if (taskData.id) {
-        // Edit
-        const taskIndex = col.tasks.findIndex((t) => t.id === taskData.id);
-        if (taskIndex !== -1) {
-          col.tasks[taskIndex] = { ...col.tasks[taskIndex], ...taskData } as KanbanTask;
-        }
-      } else {
-        // Create
-        col.tasks.push({
-          ...taskData,
-          id: `t-${Date.now()}`,
-        } as KanbanTask);
-      }
-
-      newCols[colIndex] = col;
-      return newCols;
-    });
-  };
-
-  const handleDeleteConfirm = () => {
-    setColumns((prev) => {
-      if (deleteModal.type === "column") {
-        return prev.filter((c) => c.id !== deleteModal.id);
-      } else if (deleteModal.type === "task" && deleteModal.columnId) {
-        const newCols = [...prev];
-        const colIndex = newCols.findIndex((c) => c.id === deleteModal.columnId);
-        if (colIndex !== -1) {
-          const col = { ...newCols[colIndex] };
-          col.tasks = col.tasks.filter((t) => t.id !== deleteModal.id);
-          newCols[colIndex] = col;
-        }
-        return newCols;
-      }
-      return prev;
-    });
+  const handleDeleteTask = () => {
+    if (deleteModal.task) deleteTask.mutate(deleteModal.task.id);
   };
 
   return (
@@ -159,22 +118,33 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
               className="flex gap-6 overflow-x-auto pb-6 w-full snap-x"
             >
               {columns.map((col, index) => (
-                <Draggable key={col.id} draggableId={col.id} index={index}>
+                <Draggable
+                  key={col.id}
+                  draggableId={col.id}
+                  index={index}
+                  isDragDisabled={!canManage}
+                >
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
                       {...provided.draggableProps}
-                      className={cn("snap-start shrink-0", snapshot.isDragging ? "opacity-60 z-50 scale-[1.02] shadow-xl rotate-1" : "")}
+                      className={cn(
+                        "snap-start shrink-0",
+                        snapshot.isDragging ? "opacity-60 z-50 scale-[1.02] shadow-xl rotate-1" : "",
+                      )}
                       style={provided.draggableProps.style as React.CSSProperties}
                     >
                       <KanbanColumn
                         column={col}
                         dragHandleProps={provided.dragHandleProps}
-                        onAddTask={() => setSelectTaskModal({ open: true, columnId: col.id })}
-                        onEditTask={(task) => setDetailsSheet({ open: true, task, columnId: col.id, mode: "edit" })}
-                        onDeleteTask={(task) =>
-                          setDeleteModal({ open: true, type: "task", id: task.id, name: task.title, columnId: col.id })
+                        canManage={canManage}
+                        onAddTask={() =>
+                          setTaskSheet({ open: true, mode: "create", columnId: col.id })
                         }
+                        onEditTask={(task) =>
+                          setTaskSheet({ open: true, mode: "edit", task })
+                        }
+                        onDeleteTask={(task) => setDeleteModal({ open: true, task })}
                         onViewTask={(task) => router.push(`/tasks/${task.id}`)}
                       />
                     </div>
@@ -182,17 +152,19 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
                 </Draggable>
               ))}
               {provided.placeholder}
-              
-              <div className="snap-start shrink-0 w-[300px]">
-                <Button
-                  variant="outline"
-                  className="w-full h-[60px] border-dashed text-muted-foreground hover:text-primary hover:border-primary bg-card/50"
-                  onClick={() => setIsColumnModalOpen(true)}
-                >
-                  <Plus className="mr-2 size-5" />
-                  Add Column
-                </Button>
-              </div>
+
+              {canManage && (
+                <div className="snap-start shrink-0 w-[300px]">
+                  <Button
+                    variant="outline"
+                    className="w-full h-[60px] border-dashed text-muted-foreground hover:text-primary hover:border-primary bg-card/50"
+                    onClick={() => setIsColumnModalOpen(true)}
+                  >
+                    <Plus className="mr-2 size-5" />
+                    Add Column
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </Droppable>
@@ -204,35 +176,22 @@ export const KanbanBoard = ({ initialColumns }: KanbanBoardProps) => {
         onSubmit={handleAddColumn}
       />
 
-      <SelectTaskModal
-        open={selectTaskModal.open}
-        onOpenChange={(open) => setSelectTaskModal((prev) => ({ ...prev, open }))}
-        columnId={selectTaskModal.columnId}
-        onSubmit={handleTaskSubmit}
-        availableTasks={[]} // Would fetch global backlog here
-      />
-
-      <TaskDetailsSheet
-        open={detailsSheet.open}
-        onOpenChange={(open) => setDetailsSheet((prev) => ({ ...prev, open }))}
-        task={detailsSheet.task}
-        columnTitle={detailsSheet.columnTitle}
-        columnId={detailsSheet.columnId}
-        mode={detailsSheet.mode}
-        onSubmit={handleTaskSubmit}
+      <TaskFormSheet
+        open={taskSheet.open}
+        onOpenChange={(open) => setTaskSheet((prev) => ({ ...prev, open }))}
+        mode={taskSheet.mode}
+        task={taskSheet.task}
+        defaultProjectId={projectId}
+        defaultColumnId={taskSheet.columnId}
       />
 
       <DeleteConfirmationModal
         open={deleteModal.open}
         onOpenChange={(open) => setDeleteModal((prev) => ({ ...prev, open }))}
-        title={deleteModal.type === "task" ? "Delete Task" : "Delete Column"}
-        description={
-          deleteModal.type === "task"
-            ? "Are you sure you want to delete this task? This action cannot be undone."
-            : "Are you sure you want to delete this column and all its tasks?"
-        }
-        itemName={deleteModal.name}
-        onConfirm={handleDeleteConfirm}
+        title="Delete Task"
+        description="Are you sure you want to delete this task? This action cannot be undone."
+        itemName={deleteModal.task?.title}
+        onConfirm={handleDeleteTask}
       />
     </>
   );
