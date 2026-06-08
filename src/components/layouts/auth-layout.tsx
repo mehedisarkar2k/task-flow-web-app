@@ -10,12 +10,12 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children, title, subtitle, illustrationType = "login" }: AuthLayoutProps) => {
   return (
-    <div className="min-h-screen w-full bg-[#FAF8F3] flex items-center justify-center p-4 md:p-8 antialiased">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center p-4 md:p-8 antialiased">
       {/* Main Auth Card Container */}
-      <div className="w-full max-w-[1000px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex overflow-hidden border border-border/50">
+      <div className="w-full max-w-[1000px] bg-card rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex overflow-hidden border border-border/50">
         
         {/* Left Editorial Panel */}
-        <aside className="hidden md:flex w-5/12 bg-[#F6F4EB] p-10 flex-col relative">
+        <aside className="hidden md:flex w-5/12 bg-muted p-10 flex-col relative">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-16 relative z-10">
             <Image src="/logo.svg" alt="TaskFlow Logo" width={28} height={28} />
@@ -42,7 +42,7 @@ export const AuthLayout = ({ children, title, subtitle, illustrationType = "logi
         </aside>
 
         {/* Right Form Panel */}
-        <main className="flex-1 p-6 sm:p-12 md:p-16 flex flex-col justify-center items-center bg-white relative">
+        <main className="flex-1 p-6 sm:p-12 md:p-16 flex flex-col justify-center items-center bg-card relative">
           <div className="w-full max-w-[360px]">
             {/* Header */}
             <div className="mb-8">

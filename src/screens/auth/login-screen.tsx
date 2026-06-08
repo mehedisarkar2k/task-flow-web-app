@@ -158,7 +158,7 @@ export const LoginScreen = () => {
       {/* Divider */}
       <div className="relative flex items-center py-6">
         <div className="flex-grow border-t border-border"></div>
-        <span className="flex-shrink-0 mx-4 text-[12px] text-muted-foreground font-sans bg-white px-2">or</span>
+        <span className="flex-shrink-0 mx-4 text-[12px] text-muted-foreground font-sans bg-card px-2">or</span>
         <div className="flex-grow border-t border-border"></div>
       </div>
 

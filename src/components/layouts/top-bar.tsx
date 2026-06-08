@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search, Moon, Bell, User, LogOut } from "lucide-react";
+import { Menu, Search, Moon, Sun, Bell, User, LogOut } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,6 +45,7 @@ interface DashboardTopBarProps {
 export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const pageTitle = getPageTitle(pathname ?? "");
 
   const userInitials = user?.name
@@ -98,11 +100,12 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground cursor-pointer"
           id="btn-theme-toggle"
           aria-label="Toggle theme"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
-          <Moon className="size-5" />
+          {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
         </Button>
 
         {/* Notifications */}

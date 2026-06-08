@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "next-themes";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const userInitials = user?.name
     ? user.name
@@ -129,7 +131,14 @@ export const ProfileScreen = () => {
               </p>
               <div className="flex gap-4">
                 <label className="relative flex flex-col items-center cursor-pointer group">
-                  <input className="peer sr-only" name="theme" type="radio" value="light" defaultChecked />
+                  <input
+                    className="peer sr-only"
+                    name="theme"
+                    type="radio"
+                    value="light"
+                    checked={theme === "light"}
+                    onChange={() => setTheme("light")}
+                  />
                   <div className="w-24 h-16 rounded border-2 border-border peer-checked:border-primary bg-background flex items-center justify-center mb-2 transition-colors">
                     <Sun className="text-primary size-6" />
                   </div>
@@ -138,7 +147,14 @@ export const ProfileScreen = () => {
                   </span>
                 </label>
                 <label className="relative flex flex-col items-center cursor-pointer group">
-                  <input className="peer sr-only" name="theme" type="radio" value="dark" />
+                  <input
+                    className="peer sr-only"
+                    name="theme"
+                    type="radio"
+                    value="dark"
+                    checked={theme === "dark"}
+                    onChange={() => setTheme("dark")}
+                  />
                   <div className="w-24 h-16 rounded border-2 border-border peer-checked:border-primary bg-foreground flex items-center justify-center mb-2 transition-colors">
                     <Moon className="text-background size-6" />
                   </div>
@@ -147,7 +163,14 @@ export const ProfileScreen = () => {
                   </span>
                 </label>
                 <label className="relative flex flex-col items-center cursor-pointer group">
-                  <input className="peer sr-only" name="theme" type="radio" value="system" />
+                  <input
+                    className="peer sr-only"
+                    name="theme"
+                    type="radio"
+                    value="system"
+                    checked={theme === "system"}
+                    onChange={() => setTheme("system")}
+                  />
                   <div className="w-24 h-16 rounded border-2 border-border peer-checked:border-primary bg-gradient-to-br from-background to-foreground flex items-center justify-center mb-2 transition-colors">
                     <Settings className="text-muted-foreground size-6" />
                   </div>

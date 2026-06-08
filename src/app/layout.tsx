@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -31,7 +32,14 @@ const RootLayout = ({
       suppressHydrationWarning
     >
       <body className="h-full flex flex-col bg-background text-foreground font-sans">
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
