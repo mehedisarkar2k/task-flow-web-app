@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Role } from "@/types/auth.types";
 import type { LucideIcon } from "lucide-react";
+import { useSystemConfig } from "@/hooks/queries/use-system-config";
+import { getImageUrl } from "@/utils/image";
 
 interface NavItem {
   label: string;
@@ -59,6 +61,7 @@ interface DashboardSidebarProps {
 export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
   const pathname = usePathname();
   const { user, role, isAdmin } = useAuth();
+  const { data: config } = useSystemConfig();
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (!item.allowedRoles) return true;
@@ -172,7 +175,7 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
           id="nav-profile"
         >
           <Avatar className="h-8 w-8 shrink-0">
-            <AvatarImage src={user?.image ?? undefined} alt={user?.name} />
+            <AvatarImage src={getImageUrl(user?.image, config?.profileImageBaseUrl) || undefined} alt={user?.name} />
             <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
               {userInitials}
             </AvatarFallback>

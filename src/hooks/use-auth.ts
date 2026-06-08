@@ -16,14 +16,23 @@ interface UseAuthReturn {
 export const useAuth = (): UseAuthReturn => {
   const { data: session, isPending } = useSession();
 
-  const user: SessionUser | null = session?.user
+  type RawSessionUser = NonNullable<typeof session>["user"] & {
+    role?: Role;
+    firstName?: string | null;
+    lastName?: string | null;
+  };
+
+  const rawUser = session?.user as RawSessionUser | undefined;
+
+  const user: SessionUser | null = rawUser
     ? {
-        id: session.user.id,
-        name: session.user.name,
-        email: session.user.email,
-        role:
-          ((session.user as unknown) as { role?: Role }).role ?? "MEMBER",
-        image: session.user.image,
+        id: rawUser.id,
+        name: rawUser.name,
+        firstName: rawUser.firstName ?? null,
+        lastName: rawUser.lastName ?? null,
+        email: rawUser.email,
+        role: rawUser.role ?? "MEMBER",
+        image: rawUser.image,
       }
     : null;
 

@@ -1,16 +1,59 @@
 "use client";
 
-import { Camera, Sun, Moon, Settings } from "lucide-react";
+import { Camera, Sun, Moon, Settings, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
+import { useRef, useState, useEffect } from "react";
+import { useUpdateProfileMutation, useUploadAvatarMutation, useRemoveAvatarMutation } from "@/services/mutation/use-profile-mutations";
+import { useSystemConfig } from "@/hooks/queries/use-system-config";
+import { getImageUrl } from "@/utils/image";
+import { AvatarCropperModal } from "./_components/avatar-cropper";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+  });
+
+  const updateProfile = useUpdateProfileMutation();
+  const uploadAvatar = useUploadAvatarMutation();
+  const removeAvatar = useRemoveAvatarMutation();
+  const { data: config } = useSystemConfig();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      // Use explicitly defined firstName/lastName if available,
+      // fallback to name splitting only for legacy accounts.
+      let finalFirstName = user.firstName || "";
+      let finalLastName = user.lastName || "";
+
+      if (!finalFirstName && !finalLastName && user.name) {
+        const names = user.name.trim().split(" ");
+        finalLastName = names.length > 1 ? names.pop() || "" : "";
+        finalFirstName = names.join(" ");
+      }
+
+      setFormData({
+        firstName: finalFirstName,
+        lastName: finalLastName,
+        email: user.email || "",
+      });
+    }
+  }, [user]);
 
   const userInitials = user?.name
     ? user.name
@@ -19,7 +62,50 @@ export const ProfileScreen = () => {
         .join("")
         .toUpperCase()
         .slice(0, 2)
-    : "ER";
+    : "??";
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setSelectedImageSrc(imageUrl);
+      setCropperOpen(true);
+      // Reset input value so the same file can be selected again
+      e.target.value = '';
+    }
+  };
+
+  const handleCropComplete = (croppedFile: File) => {
+    setCropperOpen(false);
+    uploadAvatar.mutate(croppedFile, {
+      onSuccess: () => {
+        if (selectedImageSrc) {
+          URL.revokeObjectURL(selectedImageSrc);
+        }
+        setSelectedImageSrc(null);
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleSaveProfile = () => {
+    updateProfile.mutate({
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+    }, {
+      onSuccess: () => {
+        window.location.reload();
+      }
+    });
+  };
+
+  const handleRemoveAvatar = () => {
+    removeAvatar.mutate(undefined, {
+      onSuccess: () => {
+        window.location.reload();
+      }
+    });
+  };
 
   return (
     <div className="flex-1 w-full max-w-4xl mx-auto py-8 px-4 md:px-8 pb-24">
@@ -44,28 +130,29 @@ export const ProfileScreen = () => {
 
           {/* Avatar Upload */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
-            <div className="relative group cursor-pointer w-20 h-20 shrink-0">
+            <div className="relative group cursor-pointer w-20 h-20 shrink-0" onClick={() => fileInputRef.current?.click()}>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/jpeg,image/png,image/gif,image/webp" onChange={handleFileChange} />
               <div className="w-20 h-20 rounded-full border border-border overflow-hidden bg-muted flex items-center justify-center text-xl font-medium text-muted-foreground">
                 {user?.image ? (
                   <img
                     alt="Current Avatar"
                     className="w-full h-full object-cover"
-                    src={user.image}
+                    src={getImageUrl(user.image, config?.profileImageBaseUrl) || ""}
                   />
                 ) : (
                   userInitials
                 )}
               </div>
               <div className="absolute inset-0 bg-foreground/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                <Camera className="text-background size-6" />
+                {uploadAvatar.isPending ? <Loader2 className="animate-spin text-background size-6" /> : <Camera className="text-background size-6" />}
               </div>
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex gap-3">
-                <Button variant="secondary" className="text-primary hover:bg-muted font-medium border border-border">
-                  Change Avatar
+                <Button variant="secondary" className="text-primary hover:bg-muted font-medium border border-border" onClick={() => fileInputRef.current?.click()} disabled={uploadAvatar.isPending}>
+                  {uploadAvatar.isPending ? 'Uploading...' : 'Change Avatar'}
                 </Button>
-                <Button variant="ghost" className="text-muted-foreground hover:text-destructive">
+                <Button variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={handleRemoveAvatar} disabled={removeAvatar.isPending || !user?.image}>
                   Remove
                 </Button>
               </div>
@@ -81,19 +168,19 @@ export const ProfileScreen = () => {
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
                 First Name
               </Label>
-              <Input defaultValue={user?.name?.split(" ")[0] || "Elena"} />
+              <Input value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} />
             </div>
             <div className="space-y-1.5">
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
                 Last Name
               </Label>
-              <Input defaultValue={user?.name?.split(" ")[1] || "Rostova"} />
+              <Input value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} />
             </div>
             <div className="md:col-span-2 space-y-1.5">
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
                 Email Address
               </Label>
-              <Input type="email" defaultValue={user?.email || "elena.r@taskflow.inc"} />
+              <Input type="email" value={formData.email} disabled className="bg-muted text-muted-foreground" />
             </div>
             <div className="md:col-span-2 space-y-1.5">
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
@@ -101,7 +188,7 @@ export const ProfileScreen = () => {
               </Label>
               <Input
                 disabled
-                defaultValue="Senior Editor"
+                value={user?.role || "MEMBER"}
                 className="bg-muted border-dashed text-muted-foreground cursor-not-allowed"
               />
               <p className="text-xs text-muted-foreground mt-1">
@@ -111,7 +198,9 @@ export const ProfileScreen = () => {
           </div>
 
           <div className="mt-8 pt-6 border-t border-border flex justify-end">
-            <Button>Save Changes</Button>
+            <Button onClick={handleSaveProfile} disabled={updateProfile.isPending}>
+              {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
           </div>
         </section>
 
@@ -270,6 +359,13 @@ export const ProfileScreen = () => {
           </div>
         </section>
       </div>
+
+      <AvatarCropperModal
+        open={cropperOpen}
+        onOpenChange={setCropperOpen}
+        imageSrc={selectedImageSrc}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 };

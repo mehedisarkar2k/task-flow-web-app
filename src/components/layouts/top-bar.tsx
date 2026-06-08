@@ -23,6 +23,10 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth-client";
 import { CheckCircle2, AtSign, Package, UserPlus } from "lucide-react";
+import { useSystemConfig } from "@/hooks/queries/use-system-config";
+import { getImageUrl } from "@/utils/image";
+
+import { useEffect, useState } from "react";
 
 const getPageTitle = (pathname: string): string => {
   const segment = pathname.split("/").filter(Boolean)[0] ?? "dashboard";
@@ -45,7 +49,14 @@ interface DashboardTopBarProps {
 export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { data: config } = useSystemConfig();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const pageTitle = getPageTitle(pathname ?? "");
 
   const userInitials = user?.name
@@ -105,7 +116,11 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
           aria-label="Toggle theme"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
-          {theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+          {mounted ? (
+            theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
+          ) : (
+            <div className="size-5" />
+          )}
         </Button>
 
         {/* Notifications */}
@@ -208,7 +223,7 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
               className="ml-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <Avatar className="h-8 w-8 border-2 border-border hover:border-primary transition-colors cursor-pointer">
-                <AvatarImage src={user?.image ?? undefined} alt={user?.name} />
+                <AvatarImage src={getImageUrl(user?.image, config?.profileImageBaseUrl) || undefined} alt={user?.name} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                   {userInitials}
                 </AvatarFallback>
