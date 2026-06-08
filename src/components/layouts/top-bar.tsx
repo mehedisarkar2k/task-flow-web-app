@@ -14,8 +14,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useAuth } from "@/hooks/use-auth";
 import { signOut } from "@/lib/auth-client";
+import { CheckCircle2, AtSign, Package, UserPlus } from "lucide-react";
 
 const getPageTitle = (pathname: string): string => {
   const segment = pathname.split("/").filter(Boolean)[0] ?? "dashboard";
@@ -100,22 +106,95 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
         </Button>
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative text-muted-foreground hover:text-foreground"
-          id="btn-notifications"
-          aria-label="View notifications"
-          asChild
-        >
-          <Link href="/notifications">
-            <Bell className="size-5" />
-            <span
-              className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-card"
-              aria-label="Unread notifications"
-            />
-          </Link>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative text-muted-foreground hover:text-foreground"
+              id="btn-notifications"
+              aria-label="View notifications"
+            >
+              <Bell className="size-5" />
+              <span
+                className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-card"
+                aria-label="Unread notifications"
+              />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[380px] p-0 border-border bg-card shadow-md flex flex-col z-50">
+            {/* Popover Header */}
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Notifications</h2>
+              <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors bg-transparent border-none cursor-pointer">
+                Mark all as read
+              </button>
+            </div>
+            {/* Popover List */}
+            <div className="max-h-[400px] overflow-y-auto flex flex-col">
+              {/* Item: Mention (Unread) */}
+              <div className="p-4 border-b border-border bg-muted/20 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3 relative group">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
+                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                  <AtSign className="size-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-foreground leading-tight">
+                    <span className="font-medium">Sarah Jenkins</span> mentioned you in <span className="font-medium text-primary">Q3 Campaign Launch</span>.
+                  </p>
+                  <p className="font-mono text-muted-foreground text-xs mt-1">10 min ago</p>
+                </div>
+              </div>
+              {/* Item: Task Assignment (Unread) */}
+              <div className="p-4 border-b border-border bg-muted/20 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3 relative group">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>
+                <div className="w-8 h-8 rounded-full bg-secondary shrink-0 mt-0.5 overflow-hidden">
+                  <img
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwyJvZ-Yheh3Gh9SMrJCoVI4rfLR42kq7w1U70HFW4A-pANCy04qo4vTyi_4zwGtkuXvr6EiIEves_f9ea_X-yPMuWwith0HR0fxA3hKLMS-GS_MKknWcljHneyWqjNUxlap5yZoPfYAv_TN_01hve8bnYwXA3qsIJ1qBsHUwh36a9pYwY6ew5CN5JVlqDaPxnfzNDoSDW0fk-C-9Dp1xyv0IqmwRd0wMa9k-f37oapdYOitVqyl9FUwM7s6M8OUOgWqGewnc6ogs"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-foreground leading-tight">
+                    <span className="font-medium">David Chen</span> assigned a new task: <span className="font-medium text-primary">Draft Executive Summary</span>.
+                  </p>
+                  <p className="font-mono text-muted-foreground text-xs mt-1">1 hour ago</p>
+                </div>
+              </div>
+              {/* Item: Status Change (Read) */}
+              <div className="p-4 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer flex gap-3">
+                <div className="w-8 h-8 rounded-full border border-border bg-muted/30 text-muted-foreground flex items-center justify-center shrink-0 mt-0.5">
+                  <CheckCircle2 className="size-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground leading-tight">
+                    Status changed to <span className="inline-block px-2 py-0.5 rounded-full bg-muted text-foreground text-xs font-medium">Completed</span> for task <span className="text-foreground">Update Brand Assets</span>.
+                  </p>
+                  <p className="font-mono text-muted-foreground text-xs mt-1">Yesterday</p>
+                </div>
+              </div>
+              {/* Item: System Alert (Read) */}
+              <div className="p-4 hover:bg-muted/50 transition-colors cursor-pointer flex gap-3">
+                <div className="w-8 h-8 rounded-full border border-border bg-muted/30 text-muted-foreground flex items-center justify-center shrink-0 mt-0.5">
+                  <Package className="size-4" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground leading-tight">
+                    Weekly workspace backup completed successfully.
+                  </p>
+                  <p className="font-mono text-muted-foreground text-xs mt-1">Oct 24, 2023</p>
+                </div>
+              </div>
+            </div>
+            {/* Popover Footer */}
+            <div className="px-4 py-2 bg-muted/30 rounded-b-xl border-t border-border text-center">
+              <Link href="/notifications" className="text-sm font-medium text-primary hover:text-primary/80 inline-block w-full py-1">
+                View all notifications
+              </Link>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* User dropdown */}
         <DropdownMenu>
