@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Sun, Moon, Settings, Loader2 } from "lucide-react";
+import { Camera, Sun, Moon, Settings, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,43 +8,72 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "next-themes";
 import { useRef, useState, useEffect } from "react";
-import { useUpdateProfileMutation, useUploadAvatarMutation, useRemoveAvatarMutation } from "@/services/mutation/use-profile-mutations";
+import {
+  useUpdateProfileMutation,
+  useUploadAvatarMutation,
+  useRemoveAvatarMutation,
+  useChangePasswordMutation,
+  useUpdatePreferencesMutation
+} from "@/services/mutation/use-profile-mutations";
 import { useSystemConfig } from "@/hooks/queries/use-system-config";
 import { getImageUrl } from "@/utils/image";
+import { toast } from "sonner";
 import { AvatarCropperModal } from "./_components/avatar-cropper";
 
 export const ProfileScreen = () => {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
-  
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
   });
 
+  const [notifications, setNotifications] = useState({
+    emailSummaries: true,
+    mentionAlerts: true,
+    marketingUpdates: false,
+  });
+
   const updateProfile = useUpdateProfileMutation();
   const uploadAvatar = useUploadAvatarMutation();
   const removeAvatar = useRemoveAvatarMutation();
+  const changePassword = useChangePasswordMutation();
+  const updatePreferences = useUpdatePreferencesMutation();
   const { data: config } = useSystemConfig();
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Cropper state
   const [cropperOpen, setCropperOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
 
+  // Password state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  // Password field visibility toggles
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  const [isInitialized, setIsInitialized] = useState(false);
+
   useEffect(() => {
-    if (user) {
+    if (user && !isInitialized) {
       // Use explicitly defined firstName/lastName if available,
       // fallback to name splitting only for legacy accounts.
       let finalFirstName = user.firstName || "";
       let finalLastName = user.lastName || "";
 
       if (!finalFirstName && !finalLastName && user.name) {
-        const names = user.name.trim().split(" ");
-        finalLastName = names.length > 1 ? names.pop() || "" : "";
-        finalFirstName = names.join(" ");
+        const parts = user.name.split(" ");
+        finalFirstName = parts[0];
+        finalLastName = parts.slice(1).join(" ");
       }
 
       setFormData({
@@ -52,16 +81,24 @@ export const ProfileScreen = () => {
         lastName: finalLastName,
         email: user.email || "",
       });
+
+      setNotifications({
+        emailSummaries: (user as any).emailSummaries ?? false,
+        mentionAlerts: (user as any).mentionAlerts ?? false,
+        marketingUpdates: (user as any).marketingUpdates ?? false,
+      });
+
+      setIsInitialized(true);
     }
-  }, [user]);
+  }, [user, isInitialized, user?.id]);
 
   const userInitials = user?.name
     ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
     : "??";
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -107,6 +144,44 @@ export const ProfileScreen = () => {
     });
   };
 
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    updatePreferences.mutate({ theme: newTheme });
+  };
+
+  const handleNotificationChange = (field: keyof typeof notifications, checked: boolean) => {
+    setNotifications((prev) => ({ ...prev, [field]: checked }));
+    updateProfile.mutate({
+      [field]: checked,
+    });
+  };
+
+  const handleUpdatePassword = () => {
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      toast.error("Please fill in all password fields");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    changePassword.mutate(
+      {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      },
+      {
+        onSuccess: () => {
+          setPasswordForm({
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+          });
+        },
+      }
+    );
+  };
+
   return (
     <div className="flex-1 w-full max-w-4xl mx-auto py-8 px-4 md:px-8 pb-24">
       {/* Page Header */}
@@ -137,7 +212,7 @@ export const ProfileScreen = () => {
                   <img
                     alt="Current Avatar"
                     className="w-full h-full object-cover"
-                    src={getImageUrl(user.image, config?.profileImageBaseUrl) || ""}
+                    src={getImageUrl(user.image, config?.profileImageBaseUrl) || undefined} 
                   />
                 ) : (
                   userInitials
@@ -226,7 +301,7 @@ export const ProfileScreen = () => {
                     type="radio"
                     value="light"
                     checked={theme === "light"}
-                    onChange={() => setTheme("light")}
+                    onChange={() => handleThemeChange("light")}
                   />
                   <div className="w-24 h-16 rounded border-2 border-border peer-checked:border-primary bg-background flex items-center justify-center mb-2 transition-colors">
                     <Sun className="text-primary size-6" />
@@ -242,7 +317,7 @@ export const ProfileScreen = () => {
                     type="radio"
                     value="dark"
                     checked={theme === "dark"}
-                    onChange={() => setTheme("dark")}
+                    onChange={() => handleThemeChange("dark")}
                   />
                   <div className="w-24 h-16 rounded border-2 border-border peer-checked:border-primary bg-foreground flex items-center justify-center mb-2 transition-colors">
                     <Moon className="text-background size-6" />
@@ -258,7 +333,7 @@ export const ProfileScreen = () => {
                     type="radio"
                     value="system"
                     checked={theme === "system"}
-                    onChange={() => setTheme("system")}
+                    onChange={() => handleThemeChange("system")}
                   />
                   <div className="w-24 h-16 rounded border-2 border-border peer-checked:border-primary bg-gradient-to-br from-background to-foreground flex items-center justify-center mb-2 transition-colors">
                     <Settings className="text-muted-foreground size-6" />
@@ -281,7 +356,11 @@ export const ProfileScreen = () => {
               <div className="space-y-4">
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <div className="relative flex items-center pt-1">
-                    <Checkbox defaultChecked className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
+                    <Checkbox
+                      checked={notifications.emailSummaries}
+                      onCheckedChange={(c) => handleNotificationChange("emailSummaries", c as boolean)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    />
                   </div>
                   <div>
                     <span className="block text-sm font-medium text-foreground group-hover:text-primary transition-colors">
@@ -294,7 +373,11 @@ export const ProfileScreen = () => {
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <div className="relative flex items-center pt-1">
-                    <Checkbox defaultChecked className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
+                    <Checkbox
+                      checked={notifications.mentionAlerts}
+                      onCheckedChange={(c) => handleNotificationChange("mentionAlerts", c as boolean)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    />
                   </div>
                   <div>
                     <span className="block text-sm font-medium text-foreground group-hover:text-primary transition-colors">
@@ -307,7 +390,11 @@ export const ProfileScreen = () => {
                 </label>
                 <label className="flex items-start gap-3 cursor-pointer group">
                   <div className="relative flex items-center pt-1">
-                    <Checkbox className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground" />
+                    <Checkbox
+                      checked={notifications.marketingUpdates}
+                      onCheckedChange={(c) => handleNotificationChange("marketingUpdates", c as boolean)}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground"
+                    />
                   </div>
                   <div>
                     <span className="block text-sm font-medium text-foreground group-hover:text-primary transition-colors">
@@ -334,27 +421,78 @@ export const ProfileScreen = () => {
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
                 Current Password
               </Label>
-              <Input type="password" className="md:w-1/2" />
+              <div className="relative md:w-1/2">
+                <Input
+                  type={showCurrentPw ? "text" : "password"}
+                  className="pr-10"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showCurrentPw ? "Hide password" : "Show password"}
+                >
+                  {showCurrentPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
                 New Password
               </Label>
-              <Input type="password" />
+              <div className="relative">
+                <Input
+                  type={showNewPw ? "text" : "password"}
+                  className="pr-10"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showNewPw ? "Hide password" : "Show password"}
+                >
+                  {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="font-mono text-xs text-muted-foreground uppercase tracking-widest block">
                 Confirm New Password
               </Label>
-              <Input type="password" />
+              <div className="relative">
+                <Input
+                  type={showConfirmPw ? "text" : "password"}
+                  className="pr-10"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPw((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label={showConfirmPw ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 pt-4 border-t border-border gap-4">
             <p className="text-xs text-muted-foreground">
-              Last changed: <span className="font-mono">2023-10-14</span>
+              Last profile update: <span className="font-mono">{(user as any)?.updatedAt ? new Date((user as any).updatedAt).toLocaleDateString() : 'N/A'}</span>
             </p>
-            <Button variant="secondary" className="border border-border">
-              Update Password
+            <Button
+              variant="secondary"
+              className="border border-border"
+              onClick={handleUpdatePassword}
+              disabled={changePassword.isPending}
+            >
+              {changePassword.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+              {changePassword.isPending ? 'Updating...' : 'Update Password'}
             </Button>
           </div>
         </section>

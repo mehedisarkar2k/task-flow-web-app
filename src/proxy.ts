@@ -8,20 +8,33 @@ import { authClient } from "./lib/auth-client";
 type Session = typeof authClient.$Infer.Session;
 
 export const proxy = async (request: NextRequest) => {
-
-  const { data: session } = await betterFetch<Session>("/api/auth/get-session", {
-    baseURL: request.nextUrl.origin,
-    headers: await headers(),
-  });
+  const { data: session } = await betterFetch<Session>(
+    "/api/auth/get-session",
+    {
+      baseURL: request.nextUrl.origin,
+      headers: await headers(),
+    }
+  );
 
   if (!session) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
   return NextResponse.next();
-}
+};
 
 export const config = {
-  // latter needs to be updated when we have the actual auth routes
-  matcher: ["/dashboard"],
+  matcher: [
+    /*
+     * Protect every route EXCEPT:
+     * - /auth/* — login, signup, forgot-password
+     * - /api/*  — API routes (auth handlers etc.)
+     * - /_next/static, /_next/image — Next.js internals
+     * - /favicon.ico, /sitemap.xml, /robots.txt — metadata files
+     * - / (root landing page)
+     *
+     * Any new page added under (dashboard) is automatically protected.
+     */
+    "/((?!auth|api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

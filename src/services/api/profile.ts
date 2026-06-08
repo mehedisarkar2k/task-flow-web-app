@@ -11,6 +11,10 @@ export interface UpdateProfileData {
   location?: string;
   bio?: string;
   skills?: string[];
+  theme?: "LIGHT" | "DARK" | "SYSTEM";
+  emailSummaries?: boolean;
+  mentionAlerts?: boolean;
+  marketingUpdates?: boolean;
 }
 
 export const profileApi = {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   LayoutDashboard,
@@ -63,6 +63,8 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
   const { user, role, isAdmin } = useAuth();
   const { data: config } = useSystemConfig();
 
+  const router = useRouter()
+
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (!item.allowedRoles) return true;
     return role && item.allowedRoles.includes(role);
@@ -70,15 +72,16 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
 
   const handleSignOut = async () => {
     await signOut();
+    router.replace("/auth/login")
   };
 
   const userInitials = user?.name
     ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
     : "?";
 
   const roleMeta = role ? ROLE_META[role] : null;
@@ -155,11 +158,11 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
               className={cn(
                 "inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-full",
                 role === "ADMIN" &&
-                  "bg-accent/10 text-accent border border-accent/20",
+                "bg-accent/10 text-accent border border-accent/20",
                 role === "PM" &&
-                  "bg-primary/10 text-primary border border-primary/20",
+                "bg-primary/10 text-primary border border-primary/20",
                 role === "MEMBER" &&
-                  "bg-muted text-muted-foreground border border-border"
+                "bg-muted text-muted-foreground border border-border"
               )}
             >
               <roleMeta.Icon className="size-3" />

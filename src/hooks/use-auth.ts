@@ -20,20 +20,28 @@ export const useAuth = (): UseAuthReturn => {
     role?: Role;
     firstName?: string | null;
     lastName?: string | null;
+    updatedAt?: string | Date;
+    emailSummaries?: boolean;
+    mentionAlerts?: boolean;
+    marketingUpdates?: boolean;
   };
 
   const rawUser = session?.user as RawSessionUser | undefined;
 
   const user: SessionUser | null = rawUser
     ? {
-        id: rawUser.id,
-        name: rawUser.name,
-        firstName: rawUser.firstName ?? null,
-        lastName: rawUser.lastName ?? null,
-        email: rawUser.email,
-        role: rawUser.role ?? "MEMBER",
-        image: rawUser.image,
-      }
+      id: rawUser.id,
+      name: rawUser.name,
+      firstName: rawUser.firstName ?? null,
+      lastName: rawUser.lastName ?? null,
+      email: rawUser.email,
+      role: rawUser.role ?? "MEMBER",
+      image: rawUser.image,
+      updatedAt: rawUser.updatedAt,
+      emailSummaries: rawUser.emailSummaries,
+      mentionAlerts: rawUser.mentionAlerts,
+      marketingUpdates: rawUser.marketingUpdates,
+    }
     : null;
 
   const role = user?.role ?? null;
@@ -46,5 +54,6 @@ export const useAuth = (): UseAuthReturn => {
     isPM: role === "PM",
     isMember: role === "MEMBER",
     hasRole: (...roles: Role[]) => (role ? roles.includes(role) : false),
+
   };
 };

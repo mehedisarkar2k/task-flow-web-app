@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, Search, Moon, Sun, Bell, User, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,8 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  const router = useRouter();
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -61,15 +63,16 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
 
   const userInitials = user?.name
     ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
     : "?";
 
   const handleSignOut = async () => {
     await signOut();
+    router.replace("/auth/login");
   };
 
   return (

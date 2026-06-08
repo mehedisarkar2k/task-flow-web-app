@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { profileApi, UpdateProfileData } from '@/services/api/profile';
 import { uploadFileToPresignedUrl } from '@/lib/upload';
+import { changePassword, updateUser } from '@/lib/auth-client';
 import { toast } from 'sonner';
 
 export const useUpdateProfileMutation = () => {
@@ -11,8 +12,46 @@ export const useUpdateProfileMutation = () => {
     onSuccess: () => {
       toast.success('Profile updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to update profile');
+    },
+  });
+};
+
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: async (data: {
+      currentPassword: string;
+      newPassword: string;
+    }) => {
+      const result = await changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+        revokeOtherSessions: false,
+      });
+      if (result.error) throw new Error(result.error.message ?? 'Failed to change password');
+      return result;
+    },
+    onSuccess: () => {
+      toast.success('Password updated successfully');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update password');
+    },
+  });
+};
+
+export const useUpdatePreferencesMutation = () => {
+  return useMutation({
+    mutationFn: async (data: { theme: string }) => {
+      const themeValue = data.theme.toUpperCase() as "LIGHT" | "DARK" | "SYSTEM";
+      return profileApi.updateProfile({ theme: themeValue });
+    },
+    onSuccess: () => {
+      toast.success('Preferences saved');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to save preferences');
     },
   });
 };
@@ -41,7 +80,7 @@ export const useUploadAvatarMutation = () => {
     onSuccess: () => {
       toast.success('Avatar updated successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to upload avatar');
     },
   });
@@ -55,8 +94,9 @@ export const useRemoveAvatarMutation = () => {
     onSuccess: () => {
       toast.success('Avatar removed');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Failed to remove avatar');
     },
   });
 };
+

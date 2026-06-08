@@ -8,4 +8,8 @@ export interface SessionUser {
   email: string;
   role: Role;
   image?: string | null;
+  updatedAt?: string | Date;
+  emailSummaries?: boolean;
+  mentionAlerts?: boolean;
+  marketingUpdates?: boolean;
 }
