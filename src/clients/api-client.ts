@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { ApiResponse } from '@/types/api.types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -24,7 +24,7 @@ apiClient.interceptors.response.use(
       instructions: error.response?.data?.instructions,
       errors: error.response?.data?.errors,
     };
-    
+
     return Promise.reject(normalizedError);
   }
 );
