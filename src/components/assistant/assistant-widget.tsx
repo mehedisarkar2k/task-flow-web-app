@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { AssistantPanel } from "./assistant-panel";
 
 export const AssistantWidget = () => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
 
   return (
     <>
       {open && (
-        <div className="fixed inset-x-3 bottom-3 top-16 z-50 sm:inset-x-auto sm:bottom-24 sm:right-5 sm:top-auto sm:h-[600px] sm:max-h-[80vh] sm:w-[380px]">
+        <div className="fixed inset-x-3 bottom-3 top-16 z-50 sm:inset-x-auto sm:bottom-20 sm:right-5 sm:top-auto sm:h-[600px] sm:max-h-[80vh] sm:w-[380px]">
           <AssistantPanel onClose={() => setOpen(false)} />
         </div>
       )}
