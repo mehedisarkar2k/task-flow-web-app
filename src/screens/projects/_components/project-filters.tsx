@@ -65,10 +65,9 @@ export const ProjectFilters = ({ filters, onChange }: ProjectFiltersProps) => {
             className="h-9 appearance-none pl-3 pr-8 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
             aria-label="Sort projects"
           >
-            <option value="newest">Sort: Newest</option>
-            <option value="oldest">Sort: Oldest</option>
-            <option value="name_asc">Name: A–Z</option>
-            <option value="name_desc">Name: Z–A</option>
+            <option value="latest">Sort: Newest</option>
+            <option value="deadline">Sort: Deadline</option>
+            <option value="updated">Sort: Recently Updated</option>
           </select>
           <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
         </div>
