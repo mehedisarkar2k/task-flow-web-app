@@ -7,6 +7,7 @@ import { ChevronRight, Edit2, Loader2, Trash2, TriangleAlert } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useTask } from "@/services/query/use-tasks";
+import { useProjectMembers } from "@/services/query/use-project-members";
 import {
   useUpdateTaskStatusMutation,
   useDeleteTaskMutation,
@@ -22,10 +23,16 @@ import type { Task } from "@/screens/tasks/types";
 
 export const TaskDetailScreen = ({ taskId }: { taskId: string }) => {
   const router = useRouter();
-  const { isAdmin, role } = useAuth();
-  const canManage = isAdmin || role === "PM";
+  const { isAdmin, role, user } = useAuth();
 
   const { data: task, isLoading, isError, error } = useTask(taskId);
+  const { data: projectMembers } = useProjectMembers(task?.project?.id);
+
+  // The project's LEAD can manage its tasks even as a global MEMBER.
+  const isProjectLead = !!projectMembers?.some(
+    (m) => m.id === user?.id && m.role === "LEAD",
+  );
+  const canManage = isAdmin || role === "PM" || isProjectLead;
   const updateStatus = useUpdateTaskStatusMutation();
   const deleteTask = useDeleteTaskMutation();
 

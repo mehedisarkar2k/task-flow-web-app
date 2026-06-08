@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { UserCombobox } from "@/components/user-combobox";
+import { useAuth } from "@/hooks/use-auth";
 import {
   useCreateProjectMutation,
   useUpdateProjectMutation,
@@ -52,6 +54,7 @@ export const CreateProjectModal = ({
   mode = "create",
   project,
 }: CreateProjectModalProps) => {
+  const { isAdmin } = useAuth();
   const createProject = useCreateProjectMutation();
   const updateProject = useUpdateProjectMutation();
   const isEdit = mode === "edit";
@@ -59,6 +62,10 @@ export const CreateProjectModal = ({
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState<FieldErrors>({});
+  // PM (admin-only) + team lead selection — create mode only.
+  const [pm, setPm] = useState<{ id: string; name: string } | null>(null);
+  const [lead, setLead] = useState<{ id: string; name: string } | null>(null);
+  const [roleErrors, setRoleErrors] = useState<{ pm?: string; lead?: string }>({});
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +80,9 @@ export const CreateProjectModal = ({
     } else {
       setForm(EMPTY_FORM);
     }
+    setPm(null);
+    setLead(null);
+    setRoleErrors({});
     setErrors({});
   }, [open, isEdit, project]);
 
@@ -103,11 +113,20 @@ export const CreateProjectModal = ({
       fieldErrors.deadline = "Deadline must be a future date";
     }
 
-    if (Object.keys(fieldErrors).length > 0) {
+    // PM + lead are required when creating (admin must also pick the PM).
+    const roleErr: { pm?: string; lead?: string } = {};
+    if (!isEdit) {
+      if (isAdmin && !pm) roleErr.pm = "Select a project manager";
+      if (!lead) roleErr.lead = "Select a team lead";
+    }
+
+    if (Object.keys(fieldErrors).length > 0 || Object.keys(roleErr).length > 0) {
       setErrors(fieldErrors);
+      setRoleErrors(roleErr);
       return;
     }
     setErrors({});
+    setRoleErrors({});
 
     if (isEdit && project) {
       updateProject.mutate(
@@ -130,6 +149,8 @@ export const CreateProjectModal = ({
           description: form.description || undefined,
           deadline: form.deadline,
           status: form.status,
+          leadId: lead!.id,
+          ...(isAdmin && pm ? { pmId: pm.id } : {}),
         },
         { onSuccess: close },
       );
@@ -207,6 +228,45 @@ export const CreateProjectModal = ({
             </NativeSelect>
           </div>
         </div>
+
+        {!isEdit && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {isAdmin && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="project-pm">Project Manager</Label>
+                <UserCombobox
+                  id="project-pm"
+                  value={pm?.id ?? null}
+                  selectedLabel={pm?.name}
+                  roleFilter="PM"
+                  placeholder="Choose a PM"
+                  invalid={!!roleErrors.pm}
+                  onSelect={(u) => {
+                    setPm({ id: u.id, name: u.name });
+                    setRoleErrors((prev) => ({ ...prev, pm: undefined }));
+                  }}
+                />
+                {roleErrors.pm && <p className="text-xs text-destructive">{roleErrors.pm}</p>}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="project-lead">Team Lead</Label>
+              <UserCombobox
+                id="project-lead"
+                value={lead?.id ?? null}
+                selectedLabel={lead?.name}
+                placeholder="Choose a team lead"
+                invalid={!!roleErrors.lead}
+                onSelect={(u) => {
+                  setLead({ id: u.id, name: u.name });
+                  setRoleErrors((prev) => ({ ...prev, lead: undefined }));
+                }}
+              />
+              {roleErrors.lead && <p className="text-xs text-destructive">{roleErrors.lead}</p>}
+            </div>
+          </div>
+        )}
       </form>
     </BaseModal>
   );

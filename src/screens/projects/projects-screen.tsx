@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, FolderKanban, Loader2, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,6 +38,17 @@ export const ProjectsScreen = () => {
   });
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
+
+  // Open the create modal when arriving via the global-search "New project"
+  // quick action (/projects?new=1), then strip the param so it doesn't re-open.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1" && canCreate) {
+      setCreateOpen(true);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [canCreate]);
 
   const debouncedSearch = useDebounce(filters.search);
 

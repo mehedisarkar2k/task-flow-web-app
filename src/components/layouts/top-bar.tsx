@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Search, Moon, Sun, Bell, User, LogOut } from "lucide-react";
+import { Menu, Moon, Sun, Bell, User, LogOut } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { GlobalSearch } from "@/components/layouts/global-search";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -107,16 +107,8 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
           {pageTitle}
         </h1>
 
-        {/* Global search */}
-        <div className="relative max-w-xs w-full hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-          <Input
-            id="global-search"
-            placeholder="Search projects, tasks..."
-            className="pl-9 h-9 bg-background border-border rounded-full text-sm w-full"
-            aria-label="Global search"
-          />
-        </div>
+        {/* Global search (command palette) */}
+        <GlobalSearch />
       </div>
 
       {/* Right actions */}

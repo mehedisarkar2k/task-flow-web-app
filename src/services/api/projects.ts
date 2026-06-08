@@ -41,6 +41,8 @@ export interface CreateProjectData {
   description?: string;
   deadline: string; // ISO date (yyyy-mm-dd)
   status: ProjectStatus;
+  pmId?: string; // required when an admin creates (the chosen PM)
+  leadId: string; // the chosen team lead
 }
 
 export interface UpdateProjectData {

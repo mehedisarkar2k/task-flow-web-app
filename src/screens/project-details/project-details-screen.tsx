@@ -26,12 +26,17 @@ interface ProjectDetailsScreenProps {
 
 export const ProjectDetailsScreen = ({ projectId }: ProjectDetailsScreenProps) => {
   const router = useRouter();
-  const { isAdmin, role } = useAuth();
-  const canManage = isAdmin || role === "PM";
+  const { isAdmin, role, user } = useAuth();
 
   const { data: project, isLoading: projectLoading, isError } = useProjectDetail(projectId);
   const { data: columns, isLoading: columnsLoading } = useProjectColumns(projectId);
   const { data: tasks, isLoading: tasksLoading } = useProjectBoardTasks(projectId);
+
+  // ADMIN and PMs manage; the project's own LEAD manages too (e.g. create tasks).
+  const isProjectLead = !!project?.members?.some(
+    (m) => m.id === user?.id && m.projectRole === "LEAD",
+  );
+  const canManage = isAdmin || role === "PM" || isProjectLead;
   const deleteProject = useDeleteProjectMutation();
 
   const [newTaskOpen, setNewTaskOpen] = useState(false);
