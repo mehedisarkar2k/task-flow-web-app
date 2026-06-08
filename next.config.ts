@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const destination = process.env.API_URL || "http://localhost:8080";
+const destination = process.env.API_URL || "https://task-flow-server-eight.vercel.app";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -8,8 +8,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/api/auth/:path*",
-        destination: `${destination}/api/auth/:path*`,
+        source: "/api/:path*",
+        destination: `${destination}/api/:path*`,
       },
     ];
   },
