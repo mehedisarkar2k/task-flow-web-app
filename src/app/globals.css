@@ -130,4 +130,55 @@
             rgba(255, 255, 255, 0.02) 10px,
             rgba(255, 255, 255, 0.02) 11px);
   }
+
+  /* Splash screen: 4 logo tiles fly in from different directions and assemble */
+  .splash-tile {
+    animation: splash-fly 1.8s cubic-bezier(0.18, 0.9, 0.25, 1.12) both;
+  }
+
+  .splash-tile:nth-child(1) {
+    --splash-fx: -55vw;
+    --splash-fy: -45vh;
+    --splash-r: -80deg;
+  }
+  .splash-tile:nth-child(2) {
+    --splash-fx: 58vw;
+    --splash-fy: -50vh;
+    --splash-r: 70deg;
+    animation-delay: 0.15s;
+  }
+  .splash-tile:nth-child(3) {
+    --splash-fx: -52vw;
+    --splash-fy: 55vh;
+    --splash-r: 95deg;
+    animation-delay: 0.3s;
+  }
+  .splash-tile:nth-child(4) {
+    --splash-fx: 60vw;
+    --splash-fy: 48vh;
+    --splash-r: -65deg;
+    animation-delay: 0.08s;
+  }
+
+  @keyframes splash-fly {
+    0% {
+      transform: translate(var(--splash-fx, -50vw), var(--splash-fy, -45vh)) scale(0)
+        rotate(var(--splash-r, -70deg));
+      opacity: 0;
+    }
+    72% {
+      transform: translate(0, 0) scale(1.06) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(0, 0) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .splash-tile {
+      animation: none;
+    }
+  }
 }

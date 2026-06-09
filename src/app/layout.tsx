@@ -3,6 +3,7 @@ import { Montserrat, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
+import { SplashScreen } from "@/components/splash-screen";
 import { Toaster } from "@/components/ui/sonner";
 
 const montserrat = Montserrat({
@@ -41,6 +42,7 @@ const RootLayout = ({
             enableSystem
             disableTransitionOnChange
           >
+            <SplashScreen />
             {children}
             <Toaster />
           </ThemeProvider>
