@@ -16,7 +16,17 @@ export const proxy = async (request: NextRequest) => {
     }
   );
 
-  if (!session) {
+  const pathname = request.nextUrl.pathname;
+  const isAuthRoute = pathname.startsWith("/auth");
+  const isPublicRoute = pathname === "/";
+
+  // If user is logged in and trying to access an auth route, redirect to dashboard
+  if (session && isAuthRoute) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  // If user is NOT logged in, and trying to access a protected route (not auth, not public), redirect to login
+  if (!session && !isAuthRoute && !isPublicRoute) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
@@ -26,15 +36,11 @@ export const proxy = async (request: NextRequest) => {
 export const config = {
   matcher: [
     /*
-     * Protect every route EXCEPT:
-     * - /auth/* — login, signup, forgot-password
+     * Run proxy on every route EXCEPT:
      * - /api/*  — API routes (auth handlers etc.)
      * - /_next/static, /_next/image — Next.js internals
      * - /favicon.ico, /sitemap.xml, /robots.txt — metadata files
-     * - / (root landing page)
-     *
-     * Any new page added under (dashboard) is automatically protected.
      */
-    "/((?!auth|api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

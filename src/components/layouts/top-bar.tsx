@@ -55,7 +55,7 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
   const pathname = usePathname();
   const { user } = useAuth();
   const { data: config } = useSystemConfig();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   const { data: notificationsData } = useNotificationsQuery({ page: 1, limit: 5 });
@@ -120,10 +120,10 @@ export const DashboardTopBar = ({ onMenuClick }: DashboardTopBarProps) => {
           className="text-muted-foreground hover:text-foreground cursor-pointer"
           id="btn-theme-toggle"
           aria-label="Toggle theme"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         >
           {mounted ? (
-            theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
+            resolvedTheme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
           ) : (
             <div className="size-5" />
           )}

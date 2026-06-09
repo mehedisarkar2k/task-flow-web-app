@@ -19,8 +19,48 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TaskFlow",
-  description: "Organize the chaos. Craft your focus.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  title: {
+    template: "%s | TaskFlow",
+    default: "TaskFlow - Organize the chaos. Craft your focus.",
+  },
+  description: "A calm, editorial workspace designed to transform project management from a noisy queue into a focused ledger.",
+  keywords: [
+    "TaskFlow",
+    "Project Management",
+    "Task Management",
+    "Productivity",
+    "Team Collaboration",
+    "Workflow",
+    "Kanban",
+  ],
+  authors: [{ name: "Mehedi Hasan sarkar", url: "mailto:mehedisarkar2k@gmail.com" }],
+  creator: "Mehedi Hasan sarkar",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    title: "TaskFlow - Organize the chaos. Craft your focus.",
+    description: "A calm, editorial workspace designed to transform project management from a noisy queue into a focused ledger.",
+    siteName: "TaskFlow",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TaskFlow - Organize the chaos. Craft your focus.",
+    description: "A calm, editorial workspace designed to transform project management from a noisy queue into a focused ledger.",
+    creator: "@taskflow",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 const RootLayout = ({

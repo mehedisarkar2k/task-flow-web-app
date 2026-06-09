@@ -54,10 +54,28 @@ export const LoginScreen = () => {
     else if (role === "PM") email = "demo-pm@taskflow.com";
     else email = "demo-member@taskflow.com";
 
-    // For demo logins, password is a common placeholder or could be handled separately.
-    // Assuming "password" for demo accounts.
-    setFormData({ email, password: "password", remember: false });
-    toast.info(`Populated demo ${role} credentials.`);
+    setLoading(true);
+    try {
+      const { error } = await signIn.email({
+        email,
+        password: "password",
+        rememberMe: false,
+      });
+
+      if (error) {
+        toast.error(error.message || `Failed to log in as ${role}`);
+        return;
+      }
+
+      toast.success(`Successfully logged in as ${role}`);
+      router.push("/dashboard");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "A network error occurred. Please try again.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
